@@ -1,0 +1,899 @@
+---
+title: "Untitled"
+author: "Arthur M. Albuquerque"
+date: "11/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("here")
+
+renv::use(lockfile = here::here("renv.lock"),
+          "ggplot2",
+          "dplyr",
+          "gt",
+          "bayesmeta",
+          "patchwork",
+          "here",
+          "brms",
+          "stan-dev/cmdstanr",
+          "tidybayes")
+
+library(patchwork)
+library(ggplot2)
+```
+
+```{r}
+# brms global settings
+
+options(mc.cores = parallel::detectCores(),
+        brms.backend = "cmdstanr") # faster
+```
+
+
+```{r}
+# Functions
+
+#### Distribution plot
+
+plot_fun = function(mean_beta,
+                    sd_beta,
+                    multiplier,
+                    color){
+
+prob = 
+  if(multiplier == -1){
+    100*round(pnorm(0, mean = mean_beta, sd = sd_beta), 3)}
+else {
+  100 - 100*round(pnorm(0, mean = mean_beta, sd = sd_beta), 3)
+}
+
+ggplot(data = data.frame(x = c(-2, 2)), aes(x)) + #Empty plot
+  
+  # Area
+  geom_area(stat = "function", fun = dnorm,
+            args = list(mean = mean_beta, sd = sd_beta),
+            fill = color, xlim = c(4*multiplier, 0),
+            alpha=0.9) +
+  # Curve
+  stat_function(fun = dnorm, n = 1000,
+              args = list(mean = mean_beta, sd = sd_beta),
+              linetype=1, size = 1.2) +
+  # Text
+  annotate("text", x = 0.5*multiplier, y = 0.5, label = paste0(prob, "%"),
+           colour = "black",  size = 7, fontface = "bold") +
+  
+  # Dashed line
+  geom_vline(xintercept = 0, linetype = 2) +
+  
+  scale_y_continuous(breaks = seq(0, 5, 1),
+                     limits = c(0, 5.2),
+                     expand = c(0, 0)) + # remove gap between X and Y axis
+  scale_x_continuous(breaks = c(-1.47, -0.69, -0.22, 0, 0.22, 0.69, 1.47),
+                     labels = c("0.23", "0.50", "0.80", "1", "1.25", "2", "4.35"),
+                     expand = c(0, 0)) +
+  coord_cartesian(x = c(-1.6, 1.6),
+                  y = c(0, 5.2)) +
+  labs(x = NULL,
+       y = "Density\n") +
+  theme_classic() +
+  theme(
+    plot.margin = margin(20,20,20,20),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = 'right',
+    legend.text = element_text(size=12),
+    legend.title = element_text(size=14),
+    legend.key= element_blank(),
+    panel.background = element_blank()
+    )
+}
+
+### Arrow plots
+
+# Define general parameters for plots
+xlim = c(0, 20)
+
+a_small_amount = abs(xlim[1] - xlim[2])/35
+
+null_line_at = 10
+
+arrow_df = data.frame(id = c(1,2),
+                      xstart = c(null_line_at - a_small_amount,
+                                      null_line_at + a_small_amount),
+                      xend = c(xlim[1] + a_small_amount, xlim[2] - a_small_amount),
+                      y = c(1, 1))
+
+
+arrow_fun = function(output,
+                     input){
+
+output = ggplot() +
+      geom_segment(data = arrow_df,
+                   aes(x = .data$xstart,
+                       xend = .data$xend,
+                       y = .data$y,
+                       yend = .data$y),
+                   arrow = arrow(angle = 15, type = "closed", length = grid::unit(0.1, "in"))) +
+  
+  geom_text(data = input, # Input
+            
+            aes(x = .data$x,
+                y = .data$y,
+                label = .data$text,
+                hjust = .data$hjust), size = 4) +
+  scale_y_continuous(expand = c(0,0), limits = c(-0.5, 1.75)) +
+  scale_x_continuous(expand = c(0,0), limits = xlim) +
+  theme(panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill = "transparent"),
+        legend.box.background = element_rect(fill = "transparent"),
+        panel.border = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.x = element_blank())
+
+return(output)
+}
+```
+
+# Priors
+
+## Figure 1
+
+```{r}
+mean_beta = 0
+sd_beta = 0.75
+threshold  = log(4.35)
+
+prob1 = pnorm(threshold, mean = mean_beta, sd = sd_beta)
+
+prob2 =  pnorm(-threshold, mean = mean_beta, sd = sd_beta)
+
+prob_final = 100*round(prob1 - prob2,2)
+
+p1 = 
+  ggplot(data = data.frame(x = c(-2, 2)), aes(x)) + #Empty plot
+  
+  # Area
+  geom_area(stat = "function", fun = dnorm,
+            args = list(mean = mean_beta, sd = sd_beta),
+            fill = "#DCC7B8", xlim = c(-threshold, threshold), alpha=0.9) +
+  # Curve
+  stat_function(fun = dnorm, n = 1000,
+              args = list(mean = mean_beta, sd = sd_beta),
+              linetype=1, size = 1.2) +
+  # Text
+  annotate("text", x = 0, y = 0.2, label = paste0(prob_final, "%"),
+           colour = "black",  size = 16, fontface = "bold") +
+  
+  # Dashed line
+  geom_vline(xintercept = c(threshold,-threshold), linetype = 2) +
+  
+  
+  scale_y_continuous(breaks = seq(0, 1.5, 0.5),
+                     limits = c(0, 1.7),
+                     expand = c(0, 0)) + # remove gap between X and Y axis
+  scale_x_continuous(breaks = c(mean_beta, threshold, -threshold),
+                     labels = c("1", "4.35", "0.23"),
+                     expand = c(0, 0)) +
+  coord_cartesian(x = c(-2, 2)) +
+  labs(x = expression("Tocilizumab Odds Ratio (" *beta[0]* ", log scale)"),
+       y = "Density\n") +
+  theme_classic() +
+  theme(
+    plot.margin = margin(20,20,20,20),
+    axis.text.x = element_text(size = 22),
+    axis.text.y = element_text(size = 22),
+    axis.title.x = element_text(size = 27),
+    axis.title.y = element_text(size = 27),
+    legend.position = 'right',
+    legend.text = element_text(size=12),
+    legend.title = element_text(size=14),
+    legend.key= element_blank(),
+    panel.background = element_blank()
+    )
+```
+
+```{r}
+informative = bayesmeta::TurnerEtAlPrior("all-cause mortality",
+                                         "pharmacological",
+                                         "placebo / control")
+
+
+logmean = informative$parameters["tau", "mu"]
+logsd = informative$parameters["tau", "sigma"]
+
+prob_1 = 100*round(
+  plnorm(0.5,
+         meanlog = logmean,
+         sdlog = logsd
+  ) - plnorm(0.1,
+             meanlog = logmean,
+             sdlog = logsd),2)
+prob_2 = 100*round(
+  plnorm(1,
+         meanlog = logmean,
+         sdlog = logsd
+  ) - plnorm(0.5,
+             meanlog = logmean,
+             sdlog = logsd),2)
+
+p2 = ggplot(data = data.frame(x = c(0, 2)), aes(x)) + #Empty plot
+  
+  
+  geom_area(stat = "function", fun = dlnorm,
+            args = list(meanlog = logmean,
+                        sdlog = logsd),
+            fill = "#D1A14F", xlim = c(0.1, 0.5), alpha=0.9) +
+  annotate("text", x = 0.2, y = 0.9, label = paste0(prob_1, "%"),
+           colour = "white",  size = 16, fontface = "bold") +
+  
+  geom_area(stat = "function", fun = dlnorm,
+            args = list(meanlog = logmean,
+                        sdlog = logsd),
+            fill = "#A9713F", xlim = c(0.5, 1), alpha=0.9) +
+  
+  stat_function(fun = dlnorm, n = 1000,
+              args = list(meanlog = logmean,
+                        sdlog = logsd),
+              linetype=1, size = 1.2,
+              color = "#999999") +
+  
+  
+  scale_y_continuous(" ",
+                     breaks = c(0,2.5,5),
+                     limits = c(0, 6),
+                     expand = c(0, 0)) + # remove gap between X and Y axis
+  scale_x_continuous(breaks = c(0, 0.1, 0.5, 1),
+                     limits = c(0, 1),
+                     expand = c(0, 0),  # remove gap between X and Y axis
+                     labels = function(x) round(as.numeric(x), 1)) +
+  labs(x = expression("Between-Study Standard Deviation (" *tau* ")")) +
+  theme_classic() +
+  theme(
+    plot.margin = margin(20,20,20,20),
+    axis.text.x = element_text(size = 22),
+    axis.text.y = element_text(size = 22),
+    axis.title.x = element_text(size = 27),
+    axis.title.y = element_text(size = 27),
+    legend.key= element_blank(),
+    panel.background = element_blank()
+    ) 
+```
+
+
+```{r, fig.width = 7, fig.height=4}
+p1 + p2 + plot_annotation(tag_levels = "A")
+
+ggsave(width = 17,
+       height = 7,
+       here::here("preregistration", "figures", # File path
+                  "figure_01.pdf")) # File name
+```
+
+## Figure 2
+
+SD calculations based on the formula provided in 
+https://hbiostat.org/R/rmsb/rmsbGraphics.html
+
+```{r}
+# Priors for sarilumab's model
+
+## Means
+
+# Figure S3 in https://doi.org/10.1101/2021.06.18.21259133;
+# version posted June 22, 2021
+reciprocal_remap_cap = 1/1.05
+mean_log_sari = log(reciprocal_remap_cap)
+
+mean_skeptical = log(1)
+
+## SDs
+
+# Assuming a mean = log(1), what is the SD that yields a distribution
+# with 0.025 probability density below log(0.5)?
+sari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
+
+# Assuming a mean = log(0.952), what is the SD that yields a distribution
+# with 0.3 probability density above log(1)?
+sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.3)
+
+# Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
+# distribution with 0.3 probability density below log(1)?
+sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.3)
+
+sari_sd_vague = 4
+
+dplyr::tribble(
+  ~Prior, ~Mean, ~SD,
+  "Skeptical", mean_skeptical, sari_sd_skeptical,
+  "Optimistic for Sarilumab", mean_log_sari, sari_sd_optimistic_sari,
+  "Optimistic for Tocilizumab", -mean_log_sari, sari_sd_optimistic_toci,
+  "Vague", mean_skeptical, sari_sd_vague
+) |> 
+  gt::gt() |> 
+  gt::tab_spanner(label = "Sarilumab's Model",
+                  columns = everything())
+```
+
+```{r}
+threshold = log(0.5)
+
+prob1 = pnorm(threshold, mean = mean_skeptical, sd = sari_sd_skeptical)
+
+prob2 =  pnorm(-threshold, mean = mean_skeptical, sd = sari_sd_skeptical)
+
+prob_final = 100*round(prob2 - prob1,3)
+
+p_skeptical = 
+  ggplot(data = data.frame(x = c(-2, 2)), aes(x)) + #Empty plot
+  
+  # Area
+  geom_area(stat = "function", fun = dnorm,
+            args = list(mean = mean_skeptical, sd = sari_sd_skeptical),
+            fill = "gray70", xlim = c(-threshold, threshold), alpha=0.9) +
+  # Curve
+  stat_function(fun = dnorm, n = 1000,
+              args = list(mean = mean_skeptical, sd = sari_sd_skeptical),
+              linetype=1, size = 1.2) +
+  # Text
+  annotate("text", x = 0, y = 0.5, label = paste0(prob_final, "%"),
+           colour = "black",  size = 7, fontface = "bold") +
+  
+  # Dashed line
+  geom_vline(xintercept = c(threshold,-threshold), linetype = 2) +
+  
+  
+  scale_y_continuous(breaks = seq(0, 5, 1),
+                     limits = c(0, 5.2),
+                     expand = c(0, 0)) + # remove gap between X and Y axis
+  scale_x_continuous(breaks = c(-1.47, -0.69, -0.22, 0, 0.22, 0.69, 1.47),
+                     labels = c("0.23", "0.50", "0.80", "1", "1.25", "2", "4.35"),
+                     expand = c(0, 0)) +
+  coord_cartesian(x = c(-1.6, 1.6)) +
+  labs(x = NULL,
+       y = "Density\n") +
+  theme_classic() +
+  theme(
+    plot.margin = margin(20,20,20,20),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = 'right',
+    legend.text = element_text(size=12),
+    legend.title = element_text(size=14),
+    legend.key= element_blank(),
+    panel.background = element_blank()
+    )
+
+
+```
+
+```{r}
+p_optimistic_sari = plot_fun(
+  mean_log_sari, # mean
+  sari_sd_optimistic_sari,  # sd
+  1, # color side
+  "khaki" # color
+  ) 
+```
+
+```{r}
+p_optimistic_toci = plot_fun(
+  -mean_log_sari, # mean
+  sari_sd_optimistic_toci,  # sd
+  -1, # color side
+  "#4A8DD1" # color
+  ) + 
+  labs(x = expression("Indirect Comparison (" *beta[1]* ", log scale)")) +
+  theme(plot.margin = margin(20,20,60,20))
+```
+
+
+
+```{r}
+labs = c("Favors\nSarilumab", "Favors\nTocilizumab")
+
+
+df = data.frame(text = labs,
+                          x = c(1,19),
+                          y = c(0.2, 0.2),
+                          hjust = c(0, 1))
+
+arrows_sari = arrow_fun(arrows, df)
+```
+
+
+```{r fig.height=10 , fig.width=7}
+p_skeptical / p_optimistic_sari / p_optimistic_toci +
+  inset_element(arrows_sari,
+                ignore_tag = TRUE,
+                align_to = "full",
+                left = unit(2.5, 'cm'),
+                bottom = unit(0.2, 'cm'),
+                right = unit(16.9, 'cm'),
+                top = unit(2.5, 'cm')) +
+  plot_annotation(tag_levels = "A")
+
+ggsave(width = 7,
+       height = 10,
+       here::here("preregistration", "figures", # File path
+                  "figure_02.pdf")) # File name
+```
+
+## Figure 3
+
+```{r}
+# Priors for baricitinib's model
+
+## Means
+mean_log_bari = log(0.9)
+
+mean_skeptical = log(1)
+
+## SDs
+
+# Assuming a mean = log(1), what is the SD that yields a distribution
+# with 0.025 probability density below log(0.5)?
+bari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
+
+# Assuming a mean = log(0.9), what is the SD that yields a distribution
+# with 0.3 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.3)
+
+# Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
+# distribution with 0.3 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.3)
+
+bari_sd_vague = 4
+
+dplyr::tribble(
+  ~Prior, ~Mean, ~SD,
+  "Skeptical", mean_skeptical, bari_sd_skeptical,
+  "Optimistic for Bariticinib", mean_log_bari, bari_sd_optimistic_bari,
+  "Optimistic for Tocilizumab", -mean_log_bari, bari_sd_optimistic_toci,
+  "Vague", mean_skeptical, sari_sd_vague
+) |> 
+  gt::gt() |> 
+  gt::tab_spanner(label = "Bariticinib's Model",
+                  columns = everything())
+```
+
+
+```{r}
+p_optimistic_bari = plot_fun(
+  mean_log_bari, # mean
+  bari_sd_optimistic_bari,  # sd
+  1, # color side
+  "khaki" # color
+  ) 
+```
+
+```{r}
+p_optimistic_toci = plot_fun(
+  -mean_log_bari, # mean
+  bari_sd_optimistic_toci,  # sd
+  -1, # color side
+  "#4A8DD1" # color
+  ) + 
+  labs(x = expression("Indirect Comparison (" *beta[1]* ", log scale)")) +
+  theme(plot.margin = margin(20,20,60,20))
+```
+
+
+```{r}
+labs = c("Favors\nBariticinib", "Favors\nTocilizumab")
+
+
+df = data.frame(text = labs,
+                          x = c(1,19),
+                          y = c(0.2, 0.2),
+                          hjust = c(0, 1))
+
+arrows_bari = arrow_fun(arrows, df)
+```
+
+
+```{r fig.height=10 , fig.width=7}
+p_skeptical / p_optimistic_bari / p_optimistic_toci +
+  inset_element(arrows_bari,
+                ignore_tag = TRUE,
+                align_to = "full",
+                left = unit(2.5, 'cm'),
+                bottom = unit(0.2, 'cm'),
+                right = unit(16.9, 'cm'),
+                top = unit(2.5, 'cm')) +
+  plot_annotation(tag_levels = "A")
+
+ggsave(width = 7,
+       height = 10,
+       here::here("preregistration", "figures", # File path
+                  "figure_03.pdf")) # File name
+```
+
+# Prior predictive check
+
+```{r}
+# Fake data
+d = data.frame(study = c("A", "B", "C"),
+               intervention = c("tocilizumab", "sarilumab", "bariticinib"),
+               yi = 0,
+               sei = 0.5) |> 
+  # Define tocilizumab as the intercept (beta_0)
+  dplyr::mutate(
+    intervention = factor(intervention, 
+                          levels = c("tocilizumab",
+                                     "sarilumab",
+                                     "bariticinib"))
+  )
+
+# Formula
+mf = 
+  formula(yi | se(sei) ~ 0 + Intercept + intervention + (1 | study))
+
+# Priors for beta_0 and tau
+# tau:
+
+# logmean
+# -1.975
+
+# logsd
+# 0.67
+
+priors = 
+  brms::prior(normal(0, 0.75), class = "b", coef = "Intercept") +
+  brms::prior(lognormal(-1.975, 0.67), class = "sd", group = "study")
+```
+
+Sarilumab's models
+
+```{r}
+
+## Skeptical model
+
+# sari_sd_skeptical
+# 0.353653
+
+m_sari_skeptical =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "bariticinib"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0, 0.353653), class = "b", coef = "interventionsarilumab"),
+  
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "sari_skeptical.Rds"),
+  file_refit = "on_change"
+)
+
+## "Optimistic for Sarilumab" model
+
+# mean_log_sari
+# -0.04879016
+
+# sari_sd_optimistic_sari
+# 0.09303989
+
+m_sari_optimistic_sari =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "bariticinib"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(-0.04879016, 0.09303989), class = "b", coef = "interventionsarilumab"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "sari_optimistic_sari.Rds"),
+  file_refit = "on_change"
+)
+
+## "Optimistic for Tocilizumab" model
+
+# -mean_log_sari
+# 0.04879016
+
+# sari_sd_optimistic_toci
+# 0.09303989
+
+m_sari_optimistic_toci =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "bariticinib"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0.04879016, 0.09303989), class = "b", coef = "interventionsarilumab"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "sari_optimistic_toci.Rds"),
+  file_refit = "on_change"
+)
+
+## Vague model
+
+m_sari_vague =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "bariticinib"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0, 4), class = "b", coef = "interventionsarilumab"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "sari_vague.Rds"),
+  file_refit = "on_change"
+)
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+
+# Function
+
+plot1_fun = function(model, color){
+draws = 
+  model |> 
+  tidybayes::tidy_draws() |> 
+  dplyr::summarise("Tocilizumab" = b_Intercept,
+            "Sarilumab" = b_Intercept + b_interventionsarilumab) |> 
+  tidyr::pivot_longer(1:2)
+
+draws |>  
+  ggplot(aes(x = exp(value))) +
+  ggdist::stat_halfeye(point_interval = ggdist::median_qi,
+                       .width = c(0.80, 0.95),
+                       fill = color) +
+  coord_cartesian(x = c(0, 5)) +
+  scale_y_discrete(expand = c(0, 0.5)) +
+  labs(x = "\nOdds Ratio",
+       y = NULL) +
+  theme(
+    strip.background = element_rect(fill = "#E4E6E7"),
+    strip.text.x = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.text.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major.x = element_line(color = "gray80", size = 0.3),
+    legend.position = 'none',
+    plot.margin = margin(20, 20, 20, 20)
+  ) +
+  facet_wrap(~ name, ncol = 1)
+
+}
+
+
+```
+
+## Figure 4
+
+```{r message=FALSE, warning=FALSE, fig.height=15, fig.width=8}
+(
+  plot1_fun(m_sari_skeptical,
+           color = "gray70") + 
+   plot1_fun(m_sari_optimistic_sari,
+             color = "khaki") ) /
+  
+(plot1_fun(m_sari_optimistic_toci,
+           color = "#4A8DD1") + 
+   plot1_fun(m_sari_vague,
+             color = "#C7CCF4") 
+ ) +
+  plot_annotation(tag_levels = "A")
+
+ggsave(width = 8,
+     height = 8,
+     here::here("preregistration", "figures", # File path
+                "figure_04.pdf")) # File name
+```
+
+
+## Figure 5
+
+Baricitinib's models
+
+```{r}
+
+## Skeptical model
+
+# bari_sd_skeptical
+# 0.353653
+
+m_bari_skeptical =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "sarilumab"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0, 0.353653), class = "b", coef = "interventionbariticinib"),
+  
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "bari_skeptical.Rds"),
+  file_refit = "on_change"
+)
+
+## "Optimistic for Baricitinib" model
+
+# mean_log_bari
+# -0.1053605
+
+# bari_sd_optimistic_bari
+# 0.2009161
+
+m_bari_optimistic_bari =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "sarilumab"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(-0.1053605, 0.2009161), class = "b", coef = "interventionbariticinib"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "bari_optimistic_bari.Rds"),
+  file_refit = "on_change"
+)
+
+## "Optimistic for Tocilizumab" model
+
+# -mean_log_bari
+# 0.1053605
+
+# bari_sd_optimistic_toci
+# 0.2009161
+
+m_bari_optimistic_toci =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "sarilumab"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0.1053605, 0.2009161), class = "b", coef = "interventionbariticinib"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "bari_optimistic_toci.Rds"),
+  file_refit = "on_change"
+)
+
+## Vague model
+
+m_bari_vague =
+  brms::brm(
+  sample_prior = "only", # Prior predictive check
+  
+  data = d |> dplyr::filter(intervention != "sarilumab"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors +
+    brms::prior(normal(0, 4), class = "b", coef = "interventionbariticinib"),
+
+  warmup = 5000,
+  iter = 10000,
+  seed = 123,
+  
+  file = here::here("preregistration", "models", "bari_vague.Rds"),
+  file_refit = "on_change"
+)
+
+```
+
+```{r message=FALSE, warning=FALSE}
+
+# Functions
+
+plot2_fun = function(model, color){
+draws = 
+  model |> 
+  tidybayes::tidy_draws() |> 
+  dplyr::summarise("Tocilizumab" = b_Intercept,
+            "Baricitinib" = b_Intercept + b_interventionbariticinib) |> 
+  tidyr::pivot_longer(1:2)
+
+draws |>  
+  ggplot(aes(x = exp(value))) +
+  ggdist::stat_halfeye(point_interval = ggdist::median_qi,
+                       .width = c(0.80, 0.95),
+                       fill = color) +
+  coord_cartesian(x = c(0, 5)) +
+  scale_y_discrete(expand = c(0, 0.5)) +
+  labs(x = "\nOdds Ratio",
+       y = NULL) +
+  theme(
+    strip.background = element_rect(fill = "#E4E6E7"),
+    strip.text.x = element_text(size = 12),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.text.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.major.x = element_line(color = "gray80", size = 0.3),
+    legend.position = 'none',
+    plot.margin = margin(20, 20, 20, 20)
+  ) +
+  facet_wrap(~ name, ncol = 1)
+
+}
+
+
+```
+
+```{r message=FALSE, warning=FALSE, fig.height=15, fig.width=8}
+(
+  plot2_fun(m_bari_skeptical,
+           color = "gray70") + 
+   plot2_fun(m_bari_optimistic_bari,
+             color = "khaki") ) /
+  
+(plot2_fun(m_bari_optimistic_toci,
+           color = "#4A8DD1") + 
+   plot2_fun(m_bari_vague,
+             color = "#C7CCF4") 
+ ) +
+  plot_annotation(tag_levels = "A")
+
+ggsave(width = 8,
+     height = 8,
+     here::here("preregistration", "figures", # File path
+                "figure_05.pdf")) # File name
+```
