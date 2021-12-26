@@ -1,0 +1,109 @@
+---
+title: "Figures and Tables"
+author: "Arthur M. Albuquerque"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align='center')
+```
+
+```{r message=FALSE, warning=FALSE}
+# Ensures the package "pacman" is installed
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(here,
+               gt,
+               cowplot,
+               magick)
+
+# Load table 2 data
+pre_table2 = readRDS(
+  here::here("output", "tables", "table_2_data.Rds")
+)
+```
+
+# Table 1 (pending)
+
+Overall characteristics of included RCTs
+
+
+# Figure 1
+
+```{r }
+knitr::include_graphics(here::here("output", "figures",
+                                   "forest_toci_bari_sari.png"))
+```
+
+### Legend
+
+Forest plots on bayesian random-effect meta-analyses of tocilizumab, baricitinib, or sarilumab versus control (three separate models). Black diamonds represent median and 95% credible intervals of posterior overall results ($\mu$). Purple diamonds represent the 95% prediction intervals of posterior predictive distributions. The median and 95% credible intervals of the between-study standard deviation parameter ($\tau$) are displayed on the left bottom corner of each forest plot.  Abbreviations: RE, random-effect; CrI, credibility interval; PI, prediction interval.
+
+# Figure 2
+
+```{r out.width="80%", out.height="80%"}
+# https://stackoverflow.com/questions/25415365/insert-side-by-side-png-images-using-knitr
+
+p = 
+  cowplot::ggdraw() + 
+  cowplot::draw_image(here::here("output", "figures",
+                                   "figure2_panelA_meta_regressions_bari.png"),
+                      x = -0.25, y = 0) +
+  cowplot::draw_image(here::here("output", "figures",
+                                   "figure2_panelB_meta_regressions_sari.png"),
+                      x = 0.25, y = 0)
+
+p
+```
+
+
+### Legend
+
+Ratio of odds ratios between tocilizumab and baricitinib (left panel) or tocilizumab
+and sarilumab (right panel). Color filled curves represent the posterior
+distributions. Color filled areas represent the posterior probability of
+noninferiority (Pr < 1.14), as the percentages on top of each figure.
+Interval bars depict the posterior median and 95% highest density intervals.
+Solid gray lines represent underlying prior distributions. Each belief is
+labeled on top of each figure.
+
+# Table 2
+
+```{r}
+pre_table2 |> 
+  gt::gt() |> 
+  gt::cols_align(
+    align = "right",
+    columns = everything()
+    ) %>%
+  gt::cols_align(
+    align = "left",
+    columns = "Belief"
+    ) |> 
+  gt::cols_width(
+    Belief ~ px(250),
+    "ROR (95% CrI)" ~ px(150),
+    "Probability of Noninferiority, %" ~ px(110),
+    "Probability of Superiority, %" ~ px(107)
+    ) |> 
+  gt::tab_footnote(
+    footnote = "Posterior probability below the noninferiority margin (1.14 ROR)",
+    locations = cells_column_labels(
+      columns = c("Probability of Noninferiority, %")
+    )
+    ) |> 
+  gt::tab_footnote(
+    footnote = "Posterior probability below 1.0 ROR",
+    locations = cells_column_labels(
+      columns = c("Probability of Superiority, %")
+    )
+    ) |> 
+  gt::tab_source_note(
+    source_note =
+      md("Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+  )
+```
+
+

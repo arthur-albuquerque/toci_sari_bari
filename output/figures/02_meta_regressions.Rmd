@@ -1,0 +1,396 @@
+---
+title: "Meta-regressions Figure"
+author: "Arthur M. Albuquerque"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+# Load packages
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(here,
+               rio,
+               dplyr,
+               ggplot2,
+               brms,
+               tidybayes,
+               patchwork,
+               cowplot,
+               gt)
+
+pacman::p_install_gh("BlakeRMills/MetBrewer")
+
+# Colors
+pal = MetBrewer::met.brewer(name="Degas",n=7,type="discrete")
+
+# Load meta-regressions
+
+# Sari vs. Toci
+mr_sari_skeptical = readRDS(here::here("output", "fits",
+                                       "mr_sari_skeptical.Rds"))
+mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_sari.Rds"))
+mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_toci.Rds"))
+mr_sari_vague = readRDS(here::here("output", "fits",
+                                   "mr_sari_vague.Rds"))
+
+# Bari vs. Toci
+
+mr_bari_skeptical = readRDS(here::here("output", "fits",
+                                       "mr_bari_skeptical.Rds"))
+mr_bari_optimistic_bari = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_bari.Rds"))
+mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_toci.Rds"))
+mr_bari_vague = readRDS(here::here("output", "fits",
+                                   "mr_bari_vague.Rds"))
+
+```
+
+
+```{r}
+ni_margin = log(1.139606)
+
+# Function to plot posterior distributions
+plot_fun = function(parameter,
+                    color,
+                    prior_mean,
+                    prior_sd,
+                    probability,
+                    header){
+  parameter |> 
+  ggplot(aes(x = value,
+             fill = stat(x < ni_margin))) +
+  ggdist::stat_halfeye(point_interval = ggdist::median_hdi,
+                       .width = 0.95,
+                       # very important so all distributions are comparable
+                       normalize = "none") +
+  scale_fill_manual(values = c("gray80", color)) +
+  # Prior 
+  stat_function(fun = dnorm,
+                args = c(mean = prior_mean,
+                         sd = prior_sd),
+                alpha = 0.8, color = "gray50", linetype = 1, size = 1) + 
+  
+  geom_vline(xintercept = ni_margin, linetype = 2, color = "gray50") +
+    
+  annotate("text", x = log(1.25), y = 4,
+           label = probability, size = 5) +
+  
+  scale_y_continuous(limits = c(0, 5),
+                     breaks = seq(0, 4, 2),
+                     expand = c(0, 0.4)) +
+  scale_x_continuous(breaks = log(c(seq(0.4, 1, 0.2), 1.139606, seq(1, 1.8, 0.4))),
+                     limits = log(c(0.4, 2.25)),
+                     labels = c(seq(0.4, 1, 0.2), 1.14, seq(1, 1.8, 0.4))) +
+  labs(x = " ",
+       y = "Density",
+       title = header) +
+  ggdist::theme_ggdist() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5), # centralize title
+        plot.margin = margin(20, 20, 0, 20))
+}
+
+# Functions to plot arrows below the figure 
+
+# Define general parameters for plots
+xlim = c(0, 20)
+
+a_small_amount = abs(xlim[1] - xlim[2])/35
+
+null_line_at = 10
+
+arrow_df = data.frame(id = c(1,2),
+                      xstart = c(null_line_at - a_small_amount,
+                                      null_line_at + a_small_amount),
+                      xend = c(xlim[1] + a_small_amount, xlim[2] - a_small_amount),
+                      y = c(1, 1))
+
+
+arrow_fun = function(output,
+                     input){
+
+output = ggplot() +
+      geom_segment(data = arrow_df,
+                   aes(x = .data$xstart,
+                       xend = .data$xend,
+                       y = .data$y,
+                       yend = .data$y),
+                   arrow = arrow(angle = 15, type = "closed", length = grid::unit(0.1, "in"))) +
+  
+  geom_text(data = input, # Input
+            
+            aes(x = .data$x,
+                y = .data$y,
+                label = .data$text,
+                hjust = .data$hjust), size = 4) +
+  scale_y_continuous(expand = c(0,0), limits = c(-0.5, 1.75)) +
+  scale_x_continuous(expand = c(0,0), limits = xlim) +
+  theme(panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.background = element_rect(fill = "transparent"),
+        legend.box.background = element_rect(fill = "transparent"),
+        panel.border = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.x = element_blank())
+
+return(output)
+}
+
+labs_bari = c("Favors\nBaricitinib", "Favors\nTocilizumab")
+
+
+df_bari = data.frame(text = labs_bari,
+                     x = c(1,19),
+                     y = c(0.2, 0.2),
+                     hjust = c(0, 1))
+
+arrows_bari = arrow_fun(arrows_bari, df_bari)
+
+labs_sari = c("Favors\nSarilumab", "Favors\nTocilizumab")
+
+
+df_sari = data.frame(text = labs_sari,
+                     x = c(1,19),
+                     y = c(0.2, 0.2),
+                     hjust = c(0, 1))
+
+arrows_sari = arrow_fun(arrows_sari, df_sari)
+
+# Function to extract posterior draws more easily
+
+parameter_fun = function(model){
+  model |>
+    tidybayes::tidy_draws() |>
+    tidyr::pivot_longer(5) # Beta_1 parameter (5th column)
+}
+  
+```
+
+```{r}
+# Prior information
+
+## Means
+mean_log_bari = log(0.9)
+
+mean_skeptical = log(1)
+
+## SDs
+
+# Assuming a mean = log(1), what is the SD that yields a distribution
+# with 0.025 probability density below log(0.5)?
+bari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
+
+# Assuming a mean = log(0.9), what is the SD that yields a distribution
+# with 0.3 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.3)
+
+# Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
+# distribution with 0.3 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.3)
+
+bari_sd_vague = 4
+```
+
+```{r}
+draws_bari =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_bari_vague)$value,
+    "skeptical" = parameter_fun(mr_bari_skeptical)$value,
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+
+probs_bari = 
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  summarise(prNI = stringr::str_c(
+    round(100*mean(value < ni_margin)), "%")
+    )
+
+p1 = plot_fun(parameter = parameter_fun(mr_bari_vague),
+              color = pal[4],
+              prior_mean = mean_skeptical,
+              prior_sd = bari_sd_vague,
+              probability = probs_bari[[4,2]],
+              header = "Vague")
+
+p2 = plot_fun(parameter = parameter_fun(mr_bari_skeptical),
+              color = pal[3],
+              prior_mean = mean_skeptical,
+              prior_sd = bari_sd_skeptical,
+              probability = probs_bari[[3,2]],
+              header = "Skeptical")
+
+p3 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_bari),
+              color = pal[5],
+              prior_mean = mean_log_bari,
+              prior_sd = bari_sd_optimistic_bari,
+              probability = probs_bari[[1,2]],
+              header = "Optimistic for Baricitinib")
+
+p4 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_toci),
+              color = pal[2],
+              prior_mean = -mean_log_bari,
+              prior_sd = bari_sd_optimistic_toci,
+              probability = probs_bari[[2,2]],
+              header = "Optimistic for Tocilizumab") +
+  theme(plot.margin = margin(20, 20, 40, 20))
+
+p_bari = 
+  (p1 / p2 / p3 / p4 + 
+  inset_element(arrows_bari,
+                ignore_tag = TRUE,
+                align_to = "full",
+                left = unit(2.5, 'cm'),
+                bottom = unit(0.2, 'cm'),
+                right = unit(14, 'cm'),
+                top = unit(2.5, 'cm')) 
+  )
+```
+
+
+```{r}
+## Means
+
+# Figure S3 in https://doi.org/10.1101/2021.06.18.21259133;
+# version posted June 22, 2021
+reciprocal_remap_cap = 1/1.05
+mean_log_sari = log(reciprocal_remap_cap)
+
+mean_skeptical = log(1)
+
+## SDs
+
+# Assuming a mean = log(1), what is the SD that yields a distribution
+# with 0.025 probability density below log(0.5)?
+sari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
+
+# Assuming a mean = log(0.952), what is the SD that yields a distribution
+# with 0.3 probability density above log(1)?
+sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.3)
+
+# Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
+# distribution with 0.3 probability density below log(1)?
+sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.3)
+
+sari_sd_vague = 4
+```
+
+```{r}
+draws_sari =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_sari_vague)$value,
+    "skeptical" = parameter_fun(mr_sari_skeptical)$value,
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+
+probs_sari = 
+  draws_sari |> 
+  dplyr::group_by(name) |> 
+  summarise(prNI = stringr::str_c(
+    round(100*mean(value < ni_margin)), "%")
+    )
+
+p1 = plot_fun(parameter = parameter_fun(mr_sari_vague),
+              color = pal[4],
+              prior_mean = mean_skeptical,
+              prior_sd = sari_sd_vague,
+              probability = probs_sari[[4,2]],
+              header = "Vague")
+
+p2 = plot_fun(parameter = parameter_fun(mr_sari_skeptical),
+              color = pal[3],
+              prior_mean = mean_skeptical,
+              prior_sd = sari_sd_skeptical,
+              probability = probs_sari[[3,2]],
+              header = "Skeptical")
+
+p3 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari),
+              color = pal[5],
+              prior_mean = mean_log_sari,
+              prior_sd = sari_sd_optimistic_sari,
+              probability = probs_sari[[1,2]],
+              header = "Optimistic for Sarilumab")
+
+p4 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci),
+              color = pal[2],
+              prior_mean = -mean_log_sari,
+              prior_sd = sari_sd_optimistic_toci,
+              probability = probs_sari[[2,2]],
+              header = "Optimistic for Tocilizumab") +
+  theme(plot.margin = margin(20, 20, 40, 20))
+
+p_sari = 
+  (p1 / p2 / p3 / p4 + 
+  patchwork::inset_element(arrows_sari,
+                           ignore_tag = TRUE,
+                           align_to = "full",
+                           left = unit(2.5, 'cm'),
+                           bottom = unit(0.2, 'cm'),
+                           right = unit(14, 'cm'),
+                           top = unit(2.5, 'cm'))
+  )
+```
+
+```{r}
+# p_bari
+# 
+# ggsave(width = 6,
+#        height = 9,
+#        here("output", "figures", # File path
+#             "figure2_panelA_meta_regressions_bari.png")) # File name
+# 
+# p_sari
+# 
+# ggsave(width = 6,
+#        height = 9,
+#        here("output", "figures", # File path
+#             "figure2_panelB_meta_regressions_sari.png")) # File name
+```
+
+```{r}
+p = 
+  cowplot::ggdraw() + 
+  cowplot::draw_image(here::here("output", "figures",
+                                   "figure2_panelA_meta_regressions_bari.png"),
+                      x = -0.25, y = 0) +
+  cowplot::draw_image(here::here("output", "figures",
+                                   "figure2_panelB_meta_regressions_sari.png"),
+                      x = 0.25, y = 0)
+
+p
+
+# ggsave(width = 6,
+#        height = 9,
+#        here("output", "figures", # File path
+#             "figure2_meta_regressions.pdf")) # File name
+```
+
+
+
+

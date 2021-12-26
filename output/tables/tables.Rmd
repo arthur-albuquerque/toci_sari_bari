@@ -1,0 +1,217 @@
+---
+title: "Tables"
+author: "Arthur M. Albuquerque"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+          code_folding: hide
+          toc: yes
+          toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load packages
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(here,
+               rio,
+               dplyr,
+               brms,
+               tidybayes,
+               gt)
+
+# Load meta-regressions
+
+# Sari vs. Toci
+mr_sari_skeptical = readRDS(here::here("output", "fits",
+                                       "mr_sari_skeptical.Rds"))
+mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_sari.Rds"))
+mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_toci.Rds"))
+mr_sari_vague = readRDS(here::here("output", "fits",
+                                   "mr_sari_vague.Rds"))
+
+# Bari vs. Toci
+
+mr_bari_skeptical = readRDS(here::here("output", "fits",
+                                       "mr_bari_skeptical.Rds"))
+mr_bari_optimistic_bari = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_bari.Rds"))
+mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_toci.Rds"))
+mr_bari_vague = readRDS(here::here("output", "fits",
+                                   "mr_bari_vague.Rds"))
+
+```
+
+```{r}
+# Function to extract posterior draws more easily
+
+parameter_fun = function(model){
+  model |>
+    tidybayes::tidy_draws() |>
+    tidyr::pivot_longer(5) # Beta_1 parameter (5th column)
+}
+
+draws_bari =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_bari_vague)$value,
+    "skeptical" = parameter_fun(mr_bari_skeptical)$value,
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+
+draws_sari =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_sari_vague)$value,
+    "skeptical" = parameter_fun(mr_sari_skeptical)$value,
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+```
+
+
+# Table 2
+
+```{r}
+ni_margin = log(1.139606)
+
+# Bari
+ror_bari = 
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  ggdist::median_hdi(exp(value)) |> 
+  dplyr::summarise(Belief = name,
+                   "ROR (95% CrI)" = stringr::str_c(
+                     round(`exp(value)`, 2),
+                     " (", round(.lower, 2), ", ", round(.upper, 2), ")"
+                     )
+                   ) |> 
+  dplyr::mutate(treatment = "Baricitinib vs. Tocilizumab")
+
+proba_bari =
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  dplyr::summarise("Probability of Noninferiority, %" =
+                     100*round(mean(value < ni_margin),2),
+                   "Probability of Superiority, %" =
+                     100*round(mean(value < log(1)),2)
+                   ) |> 
+  dplyr::rename("Belief" = name)
+
+results_bari = dplyr::left_join(ror_bari, proba_bari) |> 
+  dplyr::mutate(
+    Belief = dplyr::case_when(
+      Belief == "vague" ~ "Vague",
+      Belief == "skeptical" ~ "Skeptical",
+      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+    Belief = factor(Belief, levels = c("Vague",
+                                       "Skeptical",
+                                       "Optimistic for Baricitinib",
+                                       "Optimistic for Tocilizumab"))
+    ) |> 
+  dplyr::arrange(Belief)
+
+# Sari
+ror_sari = 
+  draws_sari |> 
+  dplyr::group_by(name) |> 
+  ggdist::median_hdi(exp(value)) |> 
+  dplyr::summarise(Belief = name,
+                   "ROR (95% CrI)" = stringr::str_c(
+                     round(`exp(value)`, 2),
+                     " (", round(.lower, 2), ", ", round(.upper, 2), ")"
+                     )
+                   ) |> 
+  dplyr::mutate(treatment = "Sarilumab vs. Tocilizumab")
+
+proba_sari =
+  draws_sari |> 
+  dplyr::group_by(name) |> 
+  dplyr::summarise("Probability of Noninferiority, %" =
+                     100*round(mean(value < ni_margin),2),
+                   "Probability of Superiority, %" =
+                     100*round(mean(value < log(1)),2)
+                   ) |> 
+  dplyr::rename("Belief" = name)
+
+results_sari = dplyr::left_join(ror_sari, proba_sari) |> 
+  dplyr::mutate(
+    Belief = dplyr::case_when(
+      Belief == "vague" ~ "Vague",
+      Belief == "skeptical" ~ "Skeptical",
+      Belief == "optimistic_sari" ~ "Optimistic for Sarilumab",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+    Belief = factor(Belief, levels = c("Vague",
+                                       "Skeptical",
+                                       "Optimistic for Sarilumab",
+                                       "Optimistic for Tocilizumab"))
+    ) |> 
+  dplyr::arrange(Belief)
+
+pre_table2 = 
+  dplyr::bind_rows(results_bari, results_sari) |> 
+  dplyr::group_by(treatment)
+
+# saveRDS(pre_table2,
+#         here("output", "tables", "table_2_data.Rds"))
+
+
+table2 = 
+  pre_table2 |> 
+  gt::gt() |> 
+  gt::cols_align(
+    align = "right",
+    columns = everything()
+    ) %>%
+  gt::cols_align(
+    align = "left",
+    columns = "Belief"
+    ) |> 
+  gt::cols_width(
+    Belief ~ px(250),
+    "ROR (95% CrI)" ~ px(150),
+    "Probability of Noninferiority, %" ~ px(110),
+    "Probability of Superiority, %" ~ px(107)
+    ) |> 
+  gt::tab_footnote(
+    footnote = "Posterior probability below the noninferiority margin (1.14 ROR)",
+    locations = cells_column_labels(
+      columns = c("Probability of Noninferiority, %")
+    )
+    ) |> 
+  gt::tab_footnote(
+    footnote = "Posterior probability below 1.0 ROR",
+    locations = cells_column_labels(
+      columns = c("Probability of Superiority, %")
+    )
+    ) |> 
+  gt::tab_source_note(
+    source_note =
+      md("Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+  )
+
+# table2 |> 
+#   gt::gtsave("table_2.html",
+#          path =  here::here("output", "tables"))
+
+
+```
+
+
+
+
+
+
+
+
