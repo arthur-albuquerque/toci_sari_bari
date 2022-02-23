@@ -27,7 +27,6 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here,
                rio,
                metafor,
-               Hmisc,
                dplyr,
                bayesmeta,
                brms)
@@ -213,15 +212,15 @@ normally distributed around the study-specific mean $\theta_i$ along with a know
 
 ## Tocilizumab vs. Sarilumab
 
-Here are the preregistered priors for this comparison:
+Here are the priors for this comparison:
 
 $$
 \begin{align*}
 \beta_0 & \sim \operatorname{Normal}(0, 0.75^2) \tag{Priors}\\
 \tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)\\
 \beta_{1[Skeptical]} & \sim \operatorname{Normal}(0, 0.354^2)\\
-\beta_{1[Sarilumab]} & \sim \operatorname{Normal}(-0.049, 0.093^2)\\
-\beta_{1[Tocilizumab]} & \sim \operatorname{Normal}(0.049, 0.093^2)\\
+\beta_{1[Sarilumab]} & \sim \operatorname{Normal}(-0.049, 0.193^2)\\
+\beta_{1[Tocilizumab]} & \sim \operatorname{Normal}(0.049, 0.193^2)\\
 \beta_{1[Vague]} & \sim \operatorname{Normal}(0, 4^2)
 \end{align*}
 $$
@@ -243,12 +242,12 @@ mean_skeptical = log(1)
 sari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
 
 # Assuming a mean = log(0.952), what is the SD that yields a distribution
-# with 0.3 probability density above log(1)?
-sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.3)
+# with 0.4 probability density above log(1)?
+sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.4)
 
 # Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
-# distribution with 0.3 probability density below log(1)?
-sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.3)
+# distribution with 0.4 probability density below log(1)?
+sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.4)
 
 sari_sd_vague = 4
 ```
@@ -312,7 +311,7 @@ m_sari_skeptical =
 # -0.04879016
 
 # sari_sd_optimistic_sari
-# 0.09303989
+# 0.1925823
 
 m_sari_optimistic_sari =
   brms::brm(
@@ -322,7 +321,7 @@ m_sari_optimistic_sari =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(-0.04879016, 0.09303989), class = "b", coef = "treatmentsarilumab"),
+    brms::prior(normal(-0.04879016, 0.1925823), class = "b", coef = "treatmentsarilumab"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),
@@ -343,7 +342,7 @@ m_sari_optimistic_sari =
 # 0.04879016
 
 # sari_sd_optimistic_toci
-# 0.09303989
+# 0.1925823
 
 m_sari_optimistic_toci =
   brms::brm(
@@ -353,7 +352,7 @@ m_sari_optimistic_toci =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(0.04879016, 0.09303989), class = "b", coef = "treatmentsarilumab"),
+    brms::prior(normal(0.04879016, 0.1925823), class = "b", coef = "treatmentsarilumab"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),
@@ -398,15 +397,15 @@ m_sari_vague =
 
 ## Tocilizumab vs. Baricitinib
 
-Here are the preregistered priors for this comparison:
+Here are the priors for this comparison:
 
 $$
 \begin{align*}
 \beta_0 & \sim \operatorname{Normal}(0, 0.75^2) \tag{Priors}\\
 \tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)\\
 \beta_{1[Skeptical]} & \sim \operatorname{Normal}(0, 0.354^2)\\
-\beta_{1[Baricitinib]} & \sim \operatorname{Normal}(-0.105, 0.20^2)\\
-\beta_{1[Tocilizumab]} & \sim \operatorname{Normal}(0.105, 0.20^2)\\
+\beta_{1[Baricitinib]} & \sim \operatorname{Normal}(-0.105, 0.416^2)\\
+\beta_{1[Tocilizumab]} & \sim \operatorname{Normal}(0.105, 0.416^2)\\
 \beta_{1[Vague]} & \sim \operatorname{Normal}(0, 4^2)
 \end{align*}
 $$
@@ -425,12 +424,12 @@ mean_skeptical = log(1)
 bari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
 
 # Assuming a mean = log(0.9), what is the SD that yields a distribution
-# with 0.3 probability density above log(1)?
-bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.3)
+# with 0.4 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.4)
 
 # Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
-# distribution with 0.3 probability density below log(1)?
-bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.3)
+# distribution with 0.4 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.4)
 
 bari_sd_vague = 4
 ```
@@ -472,7 +471,7 @@ m_bari_skeptical =
 # -0.1053605
 
 # bari_sd_optimistic_bari
-# 0.2009161
+# 0.4158742
 
 m_bari_optimistic_bari =
   brms::brm(
@@ -482,7 +481,7 @@ m_bari_optimistic_bari =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(-0.1053605, 0.2009161), class = "b", coef = "treatmentbaricitinib"),
+    brms::prior(normal(-0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),
@@ -503,7 +502,7 @@ m_bari_optimistic_bari =
 # 0.1053605
 
 # bari_sd_optimistic_toci
-# 0.2009161
+# 0.4158742
 
 m_bari_optimistic_toci =
   brms::brm(
@@ -513,7 +512,7 @@ m_bari_optimistic_toci =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(0.1053605, 0.2009161), class = "b", coef = "treatmentbaricitinib"),
+    brms::prior(normal(0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),

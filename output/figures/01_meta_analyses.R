@@ -62,7 +62,8 @@ d_toci = d_logOR |>
   dplyr::filter(treatment == "tocilizumab")
 
 d_sari_bari = d_logOR |>
-  dplyr::filter(treatment %in% c("sarilumab","baricitinib"))
+  dplyr::filter(treatment %in% c("sarilumab","baricitinib")) |> 
+  arrange(desc(study), treatment)
 
 # Bayesian meta-analyses overall results (mu), median and 95% HDI
 
@@ -75,6 +76,8 @@ bari_results = ma_bari |> brms::fixef(summary = F) |> ggdist::median_hdi()
 nd = data.frame(study = "new", sei = 0)
 
 predictions = function(model){
+  
+  set.seed(123)
   
   # Explanations: 
   # https://twitter.com/bmwiernik/status/1473306749906169858
@@ -100,31 +103,42 @@ bari_pred = predictions(ma_bari)
 # Tocilizumab
 
 forest_fun_toci = function(){
+  
   metafor::forest(d_toci$yi, d_toci$vi,
                   cex=0.75, # text size
                   ylim=c(0, 21.5), # Y length
                   rows=c(3:17),
-                  alim=log(c(0.15, 4)),
-                  xlim=c(-5, 4), 
-                  at=log(c(0.2, 0.5, 0.75, 1, 2, 4)),
+                  alim=log(c(0.25, 4)),
+                  xlim=c(-8, 3.5), 
+                  at=log(c(0.25, 0.5, 1, 2, 4)),
                   slab=d_toci$study,
+                  ilab=cbind(paste(d_toci$trt_events, "/", d_toci$trt_total),
+                             paste(d_toci$control_events, "/", d_toci$control_total)),
+                  ilab.xpos=c(-4,-2.5),
                   header="Study",
                   atransf=exp,
-                  order=d_toci$vi) 
+                  order=d_toci$vi,
+                  pch = 19) # Circles 
+  
 
-abline(h=2) # horizontal line
-
-
+abline(h=2.2) # horizontal line
 
 metafor::addpoly(x = toci_results$y,
                  ci.lb = toci_results$ymin,
                  ci.ub = toci_results$ymax,
                  
-                 mlab = "Bayesian RE Meta-analysis", # label
+                 mlab = "Total [95% CrI]", # label
                  row=1, # location
                  atransf=exp,
-                 efac = 2 # polygon size
+                 efac = 1.5 # polygon size
                  )
+
+text(c(-4,-2.5),
+     1,
+     c(paste(sum(d_toci$trt_events), "/", sum(d_toci$trt_total)),
+       paste(sum(d_toci$control_events), "/", sum(d_toci$control_total))),
+     font = 2, cex = 0.75)
+
 
 # Prediction interval
 colp = "#6b58a6"
@@ -139,24 +153,46 @@ metafor::addpoly(x = toci_pred$y,
                  annotate=FALSE,
                  
                  mlab = " ", # label
-                 row=0, # location
+                 row=-0.25, # location
                  atransf=exp,
                  efac = 0.5, # polygon size
                  col=colp, border=colp
 )
 
-# Header
-text(-4.25,18.5,
+# Headers
+
+text(mean(c(-4,-2.5)) - 0.1,
+     21.5,
+     "No of events / total",
+     font=2,
+     cex = 0.7)
+
+# Horizontal line
+segments(-4 - 0.6,
+         21,
+         -2.5 + 0.35,
+         21)
+
+text(c(-4,-2.5), 20.5, c("Experimental","Control"), font = 2, cex = 0.7)
+
+text(c(-0.6,0.6), # X axis
+     18.5, # Y axis
+     cex = 0.7, # size
+     c("Favors\nExperimental","Favors\nControl"),
+     pos=c(2,4), # Right + Left aligned
+     offset=-1)
+
+text(-7.1,18.5,
      "Tocilizumab",
      font=4, # bold
      cex = 0.9)
 
-text(-4.95, -0.15,
+text(-7.95, -0.25,
      tau_text(ma_toci),
      pos=4,
      cex=0.8)
 
-text(2.45, -0.15,
+text(1.55, -0.25,
      PI_text(toci_pred),
      pos=4,
      cex = 0.85)
@@ -166,106 +202,145 @@ text(2.45, -0.15,
 
 forest_fun_bari_sari = function(){
 
-metafor::forest(d_sari_bari$yi, d_sari_bari$vi,
-                cex=0.75, # text size
-                ylim=c(0, 21.5), # Y length
-                rows=c(3:9, 16:17),
-                alim=log(c(0.15, 4)),
-                xlim=c(-5, 4), 
-                at=log(c(0.2, 0.5, 0.75, 1, 2, 4)),
-                slab=d_sari_bari$study,
-                header="Study",
-                atransf=exp,
-                order=d_sari_bari$treatment) 
-
-abline(h=15) # horizontal line
-
-metafor::addpoly(x = bari_results$y,
-                 ci.lb = bari_results$ymin,
-                 ci.ub = bari_results$ymax,
-                 
-                 mlab = "Bayesian RE Meta-analysis",
-                 row=14,
-                 efac = 1, # polygon size
-                 atransf=exp)
-
-# Prediction interval
-colp = "#6b58a6"
-coll = "#a7a9ac"
-
-metafor::addpoly(x = bari_pred$y,
-                 ci.lb = bari_pred$ymin,
-                 ci.ub = bari_pred$ymax,
-                 
-                 pi.lb = bari_pred$ymin, # prediction interval
-                 pi.ub = bari_pred$ymax, # prediction interval
-                 annotate=FALSE,
-                 
-                 mlab = " ", # label
-                 row=13, # location
-                 atransf=exp,
-                 efac = 0.5, # polygon size
-                 col=colp, border=colp
-)
-
-text(-4.95, 13,
-     tau_text(ma_bari),
-     pos=4,
-     cex=0.8)
-
-text(2.45, 13,
-     PI_text(bari_pred),
-     pos=4,
-     cex = 0.85)
-
-abline(h=2) # horizontal line
-
-metafor::addpoly(x = sari_results$y,
-                 ci.lb = sari_results$ymin,
-                 ci.ub = sari_results$ymax,
-                 
-                 mlab = "Bayesian RE Meta-analysis",
-                 row=1,
-                 efac = 1, # polygon size
-                 atransf=exp)
-
-# Prediction interval
-colp = "#6b58a6"
-coll = "#a7a9ac"
-
-metafor::addpoly(x = sari_pred$y,
-                 ci.lb = sari_pred$ymin,
-                 ci.ub = sari_pred$ymax,
-                 
-                 pi.lb = sari_pred$ymin, # prediction interval
-                 pi.ub = sari_pred$ymax, # prediction interval
-                 annotate=FALSE,
-                 
-                 mlab = " ", # label
-                 row=0, # location
-                 atransf=exp,
-                 efac = 0.5, # polygon size
-                 col=colp, border=colp
-)
-
-text(-4.95, -0.15,
-     tau_text(ma_sari),
-     pos=4,
-     cex=0.8)
-
-text(2.45, -0.15,
-     PI_text(sari_pred),
-     pos=4,
-     cex = 0.85)
-
-### switch to bold italic font and smaller font
-par(font=4, cex = 0.9)
-
-# Header
-text(-4.4,c(18.5, 10.5),
-     c("Baricitinib", "Sarilumab"),
-     font=4,
-     cex = 0.9)
+  metafor::forest(d_sari_bari$yi, d_sari_bari$vi,
+                  cex=0.75, # text size
+                  ylim=c(0, 21.5), # Y length
+                  rows=c(3:9, 15:17),
+                  alim=log(c(0.25, 4)),
+                  xlim=c(-8, 3.5), 
+                  at=log(c(0.25, 0.5, 1, 2, 4)),
+                  slab=d_sari_bari$study,
+                  ilab=cbind(paste(d_sari_bari$trt_events, "/", d_sari_bari$trt_total),
+                             paste(d_sari_bari$control_events, "/", d_sari_bari$control_total)),
+                  ilab.xpos=c(-4,-2.5),
+                  header="Study",
+                  atransf=exp,
+                  order=d_sari_bari$treatment,
+                  pch = 19) # Circles 
+  
+  abline(h=14) # horizontal line
+  
+  metafor::addpoly(x = bari_results$y,
+                   ci.lb = bari_results$ymin,
+                   ci.ub = bari_results$ymax,
+                   
+                   mlab = "Total [95% CrI]",
+                   row=13,
+                   efac = 1, # polygon size
+                   atransf=exp)
+  
+  bari = dplyr::filter(d_sari_bari, treatment == "baricitinib")
+  
+  text(c(-4,-2.5),
+       13,
+       c(paste(sum(bari$trt_events), "/", sum(bari$trt_total)),
+         paste(sum(bari$control_events), "/", sum(bari$control_total))),
+       font = 2, cex = 0.75)
+  
+  # Prediction interval
+  colp = "#6b58a6"
+  coll = "#a7a9ac"
+  
+  metafor::addpoly(x = bari_pred$y,
+                   ci.lb = bari_pred$ymin,
+                   ci.ub = bari_pred$ymax,
+                   
+                   pi.lb = bari_pred$ymin, # prediction interval
+                   pi.ub = bari_pred$ymax, # prediction interval
+                   annotate=FALSE,
+                   
+                   mlab = " ", # label
+                   row=12, # location
+                   atransf=exp,
+                   efac = 0.5, # polygon size
+                   col=colp, border=colp
+  )
+  
+  text(-7.95, 12,
+       tau_text(ma_bari),
+       pos=4,
+       cex=0.8)
+  
+  text(1.55, 12,
+       PI_text(bari_pred),
+       pos=4,
+       cex = 0.85)
+  
+  abline(h=2) # horizontal line
+  
+  metafor::addpoly(x = sari_results$y,
+                   ci.lb = sari_results$ymin,
+                   ci.ub = sari_results$ymax,
+                   
+                   mlab = "Total [95% CrI]",
+                   row=1,
+                   efac = 1, # polygon size
+                   atransf=exp)
+  
+  sari = dplyr::filter(d_sari_bari, treatment == "sarilumab")
+  
+  text(c(-4,-2.5),
+       1,
+       c(paste(sum(sari$trt_events), "/", sum(sari$trt_total)),
+         paste(sum(sari$control_events), "/", sum(sari$control_total))),
+       font = 2, cex = 0.75)
+  
+  # Prediction interval
+  
+  metafor::addpoly(x = sari_pred$y,
+                   ci.lb = sari_pred$ymin,
+                   ci.ub = sari_pred$ymax,
+                   
+                   pi.lb = sari_pred$ymin, # prediction interval
+                   pi.ub = sari_pred$ymax, # prediction interval
+                   annotate=FALSE,
+                   
+                   mlab = " ", # label
+                   row=0, # location
+                   atransf=exp,
+                   efac = 0.5, # polygon size
+                   col=colp, border=colp
+  )
+  
+  
+  
+  text(-7.95, -0.15,
+       tau_text(ma_sari),
+       pos=4,
+       cex=0.8)
+  
+  text(1.55, -0.15,
+       PI_text(sari_pred),
+       pos=4,
+       cex = 0.85)
+  
+  # Headers
+  text(mean(c(-4,-2.5)) - 0.1,
+       21.5,
+       "No of events / total",
+       font=2,
+       cex = 0.7)
+  
+  # Horizontal line
+  segments(-4 - 0.6,
+           21,
+           -2.5 + 0.35,
+           21)
+  
+  text(c(-4,-2.5), 20.5, c("Experimental","Control"), font = 2, cex = 0.7)
+  
+  text(c(-0.6,0.6), # X axis
+       18.5, # Y axis
+       cex = 0.7, # size
+       c("Favors\nExperimental","Favors\nControl"),
+       font = 1,
+       pos=c(2,4), # Right + Left aligned
+       offset=-1)
+  
+  text(-7.2,c(18.5, 10.5),
+       c("Baricitinib", "Sarilumab"),
+       font=4,
+       cex = 0.9)
 }
 
 # Both together

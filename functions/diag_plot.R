@@ -1,6 +1,6 @@
 # https://benyandrew.netlify.app/blog/bayesian_rct/#
 
-pacman::p_load(cowplot, bayesplot)
+pacman::p_load(cowplot, ggplot2, bayesplot)
 
 base_theme <-
   theme_classic()

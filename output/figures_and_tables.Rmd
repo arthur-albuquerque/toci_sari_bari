@@ -39,7 +39,7 @@ knitr::include_graphics(here::here("output", "figures",
 
 ### Legend
 
-Forest plots on bayesian random-effect meta-analyses of tocilizumab, baricitinib, or sarilumab versus control (three separate models). Black diamonds represent median and 95% credible intervals of posterior overall results ($\mu$). Purple diamonds represent the 95% prediction intervals of posterior predictive distributions. The median and 95% credible intervals of the between-study standard deviation parameter ($\tau$) are displayed on the left bottom corner of each forest plot.  Abbreviations: RE, random-effect; CrI, credibility interval; PI, prediction interval.
+Forest plots of Bayesian random-effect meta-analyses of tocilizumab, baricitinib, or sarilumab versus control (three separate models). Black diamonds represent median and 95% credible intervals of posterior overall results ($\mu$). Purple diamonds represent the 95% prediction intervals of posterior predictive distributions. The median and 95% credible intervals of the between-study standard deviation parameter ($\tau$) are displayed on the left bottom corner of each forest plot.  Abbreviations: RE, random-effect; CrI, credible interval; PI, prediction interval.
 
 # Figure 2
 
@@ -48,12 +48,20 @@ Forest plots on bayesian random-effect meta-analyses of tocilizumab, baricitinib
 
 p = 
   cowplot::ggdraw() + 
-  cowplot::draw_image(here::here("output", "figures",
-                                   "figure2_panelA_meta_regressions_bari.png"),
-                      x = -0.25, y = 0) +
-  cowplot::draw_image(here::here("output", "figures",
-                                   "figure2_panelB_meta_regressions_sari.png"),
-                      x = 0.25, y = 0)
+  # https://stackoverflow.com/questions/50026862/the-draw-image-function-from-cowplot-results-in-blurred-pdfs
+  cowplot::draw_image(
+    magick::image_read_pdf(
+    here::here("output", "figures",
+               "figure2_panelA_meta_regressions_bari.pdf"),
+    density = 600),
+    x = -0.25, y = 0) +
+  
+  cowplot::draw_image(
+    magick::image_read_pdf(
+    here::here("output", "figures",
+               "figure2_panelB_meta_regressions_sari.pdf"),
+    density = 600),
+    x = 0.25, y = 0)
 
 p
 ```
@@ -70,6 +78,8 @@ Solid gray lines represent underlying prior distributions. Each belief is
 labeled on top of each figure.
 
 # Table 2
+
+#### Posterior Credible Intervals and Probabilities, Meta-Regression Analyses
 
 ```{r}
 pre_table2 |> 
@@ -95,14 +105,14 @@ pre_table2 |>
     )
     ) |> 
   gt::tab_footnote(
-    footnote = "Posterior probability below 1.0 ROR",
+    footnote = "Posterior probability below 1.00 ROR",
     locations = cells_column_labels(
       columns = c("Probability of Superiority, %")
     )
     ) |> 
   gt::tab_source_note(
     source_note =
-      md("Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+      md("Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
   )
 ```
 

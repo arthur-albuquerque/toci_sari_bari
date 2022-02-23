@@ -27,12 +27,15 @@ pacman::p_load(here,
                tidybayes,
                patchwork,
                cowplot,
+               pdftools,
                gt)
 
 pacman::p_install_gh("BlakeRMills/MetBrewer")
 
 # Colors
-pal = MetBrewer::met.brewer(name="Degas",n=7,type="discrete")
+pal = MetBrewer::met.brewer(name="Lakota",n=6,type="discrete")
+pal_toci = MetBrewer::met.brewer(name="OKeeffe2",n=7,type="discrete")
+pal_bari_sari = MetBrewer::met.brewer(name="VanGogh1",n=7,type="discrete")
 
 # Load meta-regressions
 
@@ -72,35 +75,43 @@ plot_fun = function(parameter,
                     header){
   parameter |> 
   ggplot(aes(x = value,
-             fill = stat(x < ni_margin))) +
+             fill = stat(x < ni_margin),
+             slab_alpha = stat(desc(x)))) + # https://github.com/mjskay/ggdist/issues/125
   ggdist::stat_halfeye(point_interval = ggdist::median_hdi,
                        .width = 0.95,
+                       point_size = 3,
+                       fill_type = "gradient",
                        # very important so all distributions are comparable
                        normalize = "none") +
+  scale_slab_alpha_continuous(range = c(-0.2, 1.25)) +
   scale_fill_manual(values = c("gray80", color)) +
   # Prior 
   stat_function(fun = dnorm,
                 args = c(mean = prior_mean,
                          sd = prior_sd),
-                alpha = 0.8, color = "gray50", linetype = 1, size = 1) + 
+                alpha = 0.8, color = "gray50", linetype = 1, size = 0.7) + 
   
   geom_vline(xintercept = ni_margin, linetype = 2, color = "gray50") +
     
-  annotate("text", x = log(1.25), y = 4,
+  annotate("text", x = log(1), y = 3.2,
            label = probability, size = 5) +
   
-  scale_y_continuous(limits = c(0, 5),
+  scale_y_continuous(limits = c(0, 4),
                      breaks = seq(0, 4, 2),
                      expand = c(0, 0.4)) +
-  scale_x_continuous(breaks = log(c(seq(0.4, 1, 0.2), 1.139606, seq(1, 1.8, 0.4))),
-                     limits = log(c(0.4, 2.25)),
-                     labels = c(seq(0.4, 1, 0.2), 1.14, seq(1, 1.8, 0.4))) +
+  scale_x_continuous(breaks = log(c(seq(0.6, 1, 0.2), 1.139606, seq(1, 1.8, 0.4))),
+                     limits = log(c(0.5, 2)),
+                     labels = c(seq(0.6, 1, 0.2), 1.14, seq(1, 1.8, 0.4))) +
   labs(x = " ",
        y = "Density",
-       title = header) +
+       subtitle = header) +
   ggdist::theme_ggdist() +
   theme(legend.position = 'none',
-        plot.title = element_text(hjust = 0.5), # centralize title
+        plot.subtitle = element_text(hjust = 0.5, # centralize
+                                     size=14), 
+        plot.title = element_text(hjust = 0.5, # centralize
+                                  size=16,
+                                  face="bold"),
         plot.margin = margin(20, 20, 0, 20))
 }
 
@@ -203,12 +214,12 @@ mean_skeptical = log(1)
 bari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
 
 # Assuming a mean = log(0.9), what is the SD that yields a distribution
-# with 0.3 probability density above log(1)?
-bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.3)
+# with 0.4 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.4)
 
 # Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
-# distribution with 0.3 probability density below log(1)?
-bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.3)
+# distribution with 0.4 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.4)
 
 bari_sd_vague = 4
 ```
@@ -231,28 +242,29 @@ probs_bari =
     )
 
 p1 = plot_fun(parameter = parameter_fun(mr_bari_vague),
-              color = pal[4],
+              color = "#E0C6B6",
               prior_mean = mean_skeptical,
               prior_sd = bari_sd_vague,
               probability = probs_bari[[4,2]],
-              header = "Vague")
+              header = "Vague") +
+  ggplot2::labs(title = "Baricitinib vs. Tocilizumab\n")
 
 p2 = plot_fun(parameter = parameter_fun(mr_bari_skeptical),
-              color = pal[3],
+              color = "gray50",
               prior_mean = mean_skeptical,
               prior_sd = bari_sd_skeptical,
               probability = probs_bari[[3,2]],
               header = "Skeptical")
 
 p3 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_bari),
-              color = pal[5],
+              color = pal_bari_sari[3],
               prior_mean = mean_log_bari,
               prior_sd = bari_sd_optimistic_bari,
               probability = probs_bari[[1,2]],
               header = "Optimistic for Baricitinib")
 
 p4 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_toci),
-              color = pal[2],
+              color = pal_toci[6],
               prior_mean = -mean_log_bari,
               prior_sd = bari_sd_optimistic_toci,
               probability = probs_bari[[2,2]],
@@ -264,7 +276,7 @@ p_bari =
   inset_element(arrows_bari,
                 ignore_tag = TRUE,
                 align_to = "full",
-                left = unit(2.5, 'cm'),
+                left = unit(1.75, 'cm'),
                 bottom = unit(0.2, 'cm'),
                 right = unit(14, 'cm'),
                 top = unit(2.5, 'cm')) 
@@ -289,12 +301,12 @@ mean_skeptical = log(1)
 sari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
 
 # Assuming a mean = log(0.952), what is the SD that yields a distribution
-# with 0.3 probability density above log(1)?
-sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.3)
+# with 0.4 probability density above log(1)?
+sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.4)
 
 # Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
-# distribution with 0.3 probability density below log(1)?
-sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.3)
+# distribution with 0.4 probability density below log(1)?
+sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.4)
 
 sari_sd_vague = 4
 ```
@@ -317,28 +329,29 @@ probs_sari =
     )
 
 p1 = plot_fun(parameter = parameter_fun(mr_sari_vague),
-              color = pal[4],
+              color = "#E0C6B6",
               prior_mean = mean_skeptical,
               prior_sd = sari_sd_vague,
               probability = probs_sari[[4,2]],
-              header = "Vague")
+              header = "Vague") +
+  ggplot2::labs(title = "Sarilumab vs. Tocilizumab\n")
 
 p2 = plot_fun(parameter = parameter_fun(mr_sari_skeptical),
-              color = pal[3],
+              color = "gray50",
               prior_mean = mean_skeptical,
               prior_sd = sari_sd_skeptical,
               probability = probs_sari[[3,2]],
               header = "Skeptical")
 
 p3 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari),
-              color = pal[5],
+              color = pal_bari_sari[7],
               prior_mean = mean_log_sari,
               prior_sd = sari_sd_optimistic_sari,
               probability = probs_sari[[1,2]],
               header = "Optimistic for Sarilumab")
 
 p4 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci),
-              color = pal[2],
+              color = pal_toci[6],
               prior_mean = -mean_log_sari,
               prior_sd = sari_sd_optimistic_toci,
               probability = probs_sari[[2,2]],
@@ -350,46 +363,67 @@ p_sari =
   patchwork::inset_element(arrows_sari,
                            ignore_tag = TRUE,
                            align_to = "full",
-                           left = unit(2.5, 'cm'),
+                           left = unit(1.75, 'cm'),
                            bottom = unit(0.2, 'cm'),
                            right = unit(14, 'cm'),
                            top = unit(2.5, 'cm'))
   )
 ```
 
-```{r}
-# p_bari
-# 
-# ggsave(width = 6,
-#        height = 9,
-#        here("output", "figures", # File path
-#             "figure2_panelA_meta_regressions_bari.png")) # File name
-# 
-# p_sari
-# 
-# ggsave(width = 6,
-#        height = 9,
-#        here("output", "figures", # File path
-#             "figure2_panelB_meta_regressions_sari.png")) # File name
+```{r include=FALSE}
+
+p_bari
+
+ggsave(width = 6,
+       height = 9,
+       device = cairo_pdf,
+       here::here("output", "figures", # File path
+                  "figure2_panelA_meta_regressions_bari.pdf"))
+
+p_sari
+
+ggsave(width = 6,
+       height = 9,
+       device = cairo_pdf,
+       here::here("output", "figures", # File path
+                  "figure2_panelB_meta_regressions_sari.pdf")) # File name
 ```
 
-```{r}
-p = 
+```{r fig.align='center'}
+p =
   cowplot::ggdraw() + 
-  cowplot::draw_image(here::here("output", "figures",
-                                   "figure2_panelA_meta_regressions_bari.png"),
-                      x = -0.25, y = 0) +
-  cowplot::draw_image(here::here("output", "figures",
-                                   "figure2_panelB_meta_regressions_sari.png"),
-                      x = 0.25, y = 0)
+  # https://stackoverflow.com/questions/50026862/the-draw-image-function-from-cowplot-results-in-blurred-pdfs
+  cowplot::draw_image(
+    magick::image_read_pdf(
+    here::here("output", "figures",
+               "figure2_panelA_meta_regressions_bari.pdf"),
+    density = 600),
+    x = -0.25, y = 0) +
+  
+  cowplot::draw_image(
+    magick::image_read_pdf(
+    here::here("output", "figures",
+               "figure2_panelB_meta_regressions_sari.pdf"),
+    density = 600),
+    x = 0.25, y = 0)
 
 p
 
-# ggsave(width = 6,
-#        height = 9,
-#        here("output", "figures", # File path
-#             "figure2_meta_regressions.pdf")) # File name
+ggsave(width = 12,
+       height = 9,
+       here("output", "figures", # File path
+            "figure2_meta_regressions.png")) # File name
+
+ggsave(width = 12,
+       height = 9,
+       here("output", "figures", # File path
+            "figure2_meta_regressions.pdf")) # File name
 ```
+
+```{r}
+
+```
+
 
 
 
