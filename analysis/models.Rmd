@@ -571,6 +571,17 @@ diag_plot(model = ma_toci,
           ncol_trace = 4)
 ```
 
+```{r}
+brms::pp_check(ma_toci,
+               type = "dens_overlay",
+               ndraws = 50)
+
+brms::pp_check(ma_toci,
+               type = "ecdf_overlay",
+               ndraws = 50)
+```
+
+
 Sarilumab model
 
 ```{r}
@@ -579,12 +590,32 @@ diag_plot(model = ma_sari,
           ncol_trace = 4)
 ```
 
+```{r}
+brms::pp_check(ma_sari,
+               type = "dens_overlay",
+               ndraws = 50)
+
+brms::pp_check(ma_sari,
+               type = "ecdf_overlay",
+               ndraws = 50)
+```
+
 Baricitinib model
 
 ```{r}
 diag_plot(model = ma_bari,
           pars_list = c("b_Intercept", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(ma_bari,
+               type = "dens_overlay",
+               ndraws = 50) + coord_cartesian(y = c(0, 5))
+
+brms::pp_check(ma_bari,
+               type = "ecdf_overlay",
+               ndraws = 50)
 ```
 
 ## Meta-regressions
@@ -599,12 +630,36 @@ diag_plot(model = m_sari_skeptical,
           ncol_trace = 4)
 ```
 
+```{r }
+brms::pp_check(m_sari_skeptical,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_sari_skeptical,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
 "Optimistic for Sarilumab" model
 
 ```{r}
 diag_plot(model = m_sari_optimistic_sari,
           pars_list = c("b_Intercept", "b_treatmentsarilumab", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r }
+brms::pp_check(m_sari_optimistic_sari,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_sari_optimistic_sari,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
 ```
 
 "Optimistic for Tocilizumab" model
@@ -615,12 +670,36 @@ diag_plot(model = m_sari_optimistic_toci,
           ncol_trace = 4)
 ```
 
+```{r }
+brms::pp_check(m_sari_optimistic_toci,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_sari_optimistic_toci,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
 "Vague" model
 
 ```{r}
 diag_plot(model = m_sari_vague,
           pars_list = c("b_Intercept", "b_treatmentsarilumab", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r }
+brms::pp_check(m_sari_vague,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_sari_vague,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
 ```
 
 ### Tocilizumab vs. Baricitinib
@@ -633,12 +712,36 @@ diag_plot(model = m_bari_skeptical,
           ncol_trace = 4)
 ```
 
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_skeptical,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+
+brms::pp_check(m_bari_skeptical,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
 "Optimistic for Sarilumab" model
 
 ```{r}
 diag_plot(model = m_bari_optimistic_bari,
           pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_bari,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+
+brms::pp_check(m_bari_optimistic_bari,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
 ```
 
 "Optimistic for Tocilizumab" model
@@ -649,12 +752,36 @@ diag_plot(model = m_bari_optimistic_toci,
           ncol_trace = 4)
 ```
 
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_toci,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+
+brms::pp_check(m_bari_optimistic_toci,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
 "Vague" model
 
 ```{r}
 diag_plot(model = m_bari_vague,
           pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_vague,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+
+brms::pp_check(m_bari_vague,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
 ```
 
 
