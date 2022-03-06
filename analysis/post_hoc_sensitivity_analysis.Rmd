@@ -182,11 +182,35 @@ diag_plot(model = m_sari_optimistic_sari_remapcap,
           ncol_trace = 4)
 ```
 
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_sari_optimistic_sari_remapcap,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_sari_optimistic_sari_remapcap,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
 "Optimistic for Tocilizumab" model
 
 ```{r}
 diag_plot(model = m_sari_optimistic_toci_remapcap,
           pars_list = c("b_Intercept", "b_treatmentsarilumab", "sd_study__Intercept"),
           ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_sari_optimistic_toci_remapcap,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) 
+
+brms::pp_check(m_sari_optimistic_toci_remapcap,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
 ```
 

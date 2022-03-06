@@ -170,7 +170,7 @@ ma_sari =
 
 ma_bari = 
   brms::brm(
-  data = d_logOR |> dplyr::filter(treatment == "baricitinib"),
+  data = d_logOR |> dplyr::filter(treatment == "baricitinib", study != "RECOVERY Bari"),
   family = gaussian,
   
   formula = mf,
@@ -190,6 +190,32 @@ ma_bari =
 )
 
 ```
+
+## Sensitivity analysis with all patients in RECOVERY Bari
+
+```{r}
+ma_bari_sens = 
+  brms::brm(
+  data = d_logOR |> dplyr::filter(treatment == "baricitinib", study != "RECOVERY Bari (No Toci)"),
+  family = gaussian,
+  
+  formula = mf,
+  prior = priors_ma,
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  cores = parallel::detectCores(),
+  chains = 4,
+  warmup = 2000, 
+  iter = 4000, 
+  seed = 123,
+  
+  file = here::here("output", "fits", "ma_bari_sens.Rds"),
+  file_refit = "on_change"
+)
+```
+
 
 # Meta-regressions
 
@@ -444,7 +470,7 @@ bari_sd_vague = 4
 m_bari_skeptical =
   brms::brm(
     
-  data = d_logOR |> dplyr::filter(treatment != "sarilumab"),
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
   family = gaussian,
   formula = mf,
   
@@ -476,7 +502,7 @@ m_bari_skeptical =
 m_bari_optimistic_bari =
   brms::brm(
     
-  data = d_logOR |> dplyr::filter(treatment != "sarilumab"),
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
   family = gaussian,
   formula = mf,
   
@@ -507,7 +533,7 @@ m_bari_optimistic_bari =
 m_bari_optimistic_toci =
   brms::brm(
     
-  data = d_logOR |> dplyr::filter(treatment != "sarilumab"),
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
   family = gaussian,
   formula = mf,
   
@@ -532,7 +558,7 @@ m_bari_optimistic_toci =
 m_bari_vague =
   brms::brm(
     
-  data = d_logOR |> dplyr::filter(treatment != "sarilumab"),
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
   family = gaussian,
   formula = mf,
   
@@ -549,6 +575,128 @@ m_bari_vague =
   chains = 4,
   
   file = here::here("output", "fits", "mr_bari_vague.Rds"),
+  file_refit = "on_change"
+)
+
+```
+
+### Sensitivity analysis with all patients in RECOVERY Bari
+
+```{r}
+
+## Skeptical model
+
+# bari_sd_skeptical
+# 0.353653
+
+m_bari_skeptical_sens =
+  brms::brm(
+    
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(0, 0.353653), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "mr_bari_skeptical_sens.Rds"),
+  file_refit = "on_change"
+)
+
+
+## "Optimistic for Baricitinib" model
+
+# mean_log_bari
+# -0.1053605
+
+# bari_sd_optimistic_bari
+# 0.4158742
+
+m_bari_optimistic_bari_sens =
+  brms::brm(
+    
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(-0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "mr_bari_optimistic_bari_sens.Rds"),
+  file_refit = "on_change"
+)
+
+## "Optimistic for Tocilizumab" model
+
+# -mean_log_bari
+# 0.1053605
+
+# bari_sd_optimistic_toci
+# 0.4158742
+
+m_bari_optimistic_toci_sens =
+  brms::brm(
+    
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "mr_bari_optimistic_toci_sens.Rds"),
+  file_refit = "on_change"
+)
+
+## Vague model
+
+m_bari_vague_sens =
+  brms::brm(
+    
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(0, 4), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "mr_bari_vague_sens.Rds"),
   file_refit = "on_change"
 )
 
@@ -600,7 +748,7 @@ brms::pp_check(ma_sari,
                ndraws = 50)
 ```
 
-Baricitinib model
+Baricitinib models
 
 ```{r}
 diag_plot(model = ma_bari,
@@ -614,6 +762,24 @@ brms::pp_check(ma_bari,
                ndraws = 50) + coord_cartesian(y = c(0, 5))
 
 brms::pp_check(ma_bari,
+               type = "ecdf_overlay",
+               ndraws = 50)
+```
+
+Baricitinib models
+
+```{r}
+diag_plot(model = ma_bari_sens,
+          pars_list = c("b_Intercept", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(ma_bari_sens,
+               type = "dens_overlay",
+               ndraws = 50) + coord_cartesian(y = c(0, 5))
+
+brms::pp_check(ma_bari_sens,
                type = "ecdf_overlay",
                ndraws = 50)
 ```
@@ -704,7 +870,7 @@ brms::pp_check(m_sari_vague,
 
 ### Tocilizumab vs. Baricitinib
 
-"Skeptical" model
+"Skeptical" models
 
 ```{r}
 diag_plot(model = m_bari_skeptical,
@@ -716,7 +882,7 @@ diag_plot(model = m_bari_skeptical,
 brms::pp_check(m_bari_skeptical,
                type = "dens_overlay_grouped",
                group = "treatment",
-               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
 
 brms::pp_check(m_bari_skeptical,
                type = "ecdf_overlay_grouped",
@@ -724,7 +890,25 @@ brms::pp_check(m_bari_skeptical,
                ndraws = 50)
 ```
 
-"Optimistic for Sarilumab" model
+```{r}
+diag_plot(model = m_bari_skeptical_sens,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_skeptical_sens,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
+
+brms::pp_check(m_bari_skeptical_sens,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+"Optimistic for Baricitinib" models
 
 ```{r}
 diag_plot(model = m_bari_optimistic_bari,
@@ -736,7 +920,7 @@ diag_plot(model = m_bari_optimistic_bari,
 brms::pp_check(m_bari_optimistic_bari,
                type = "dens_overlay_grouped",
                group = "treatment",
-               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
 
 brms::pp_check(m_bari_optimistic_bari,
                type = "ecdf_overlay_grouped",
@@ -744,7 +928,25 @@ brms::pp_check(m_bari_optimistic_bari,
                ndraws = 50)
 ```
 
-"Optimistic for Tocilizumab" model
+```{r}
+diag_plot(model = m_bari_optimistic_bari_sens,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_bari_sens,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
+
+brms::pp_check(m_bari_optimistic_bari_sens,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+"Optimistic for Tocilizumab" models
 
 ```{r}
 diag_plot(model = m_bari_optimistic_toci,
@@ -756,7 +958,7 @@ diag_plot(model = m_bari_optimistic_toci,
 brms::pp_check(m_bari_optimistic_toci,
                type = "dens_overlay_grouped",
                group = "treatment",
-               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
 
 brms::pp_check(m_bari_optimistic_toci,
                type = "ecdf_overlay_grouped",
@@ -764,7 +966,27 @@ brms::pp_check(m_bari_optimistic_toci,
                ndraws = 50)
 ```
 
-"Vague" model
+"Optimistic for Tocilizumab" model
+
+```{r}
+diag_plot(model = m_bari_optimistic_toci_sens,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_toci_sens,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
+
+brms::pp_check(m_bari_optimistic_toci_sens,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+"Vague" models
 
 ```{r}
 diag_plot(model = m_bari_vague,
@@ -776,9 +998,27 @@ diag_plot(model = m_bari_vague,
 brms::pp_check(m_bari_vague,
                type = "dens_overlay_grouped",
                group = "treatment",
-               ndraws = 50) + coord_cartesian(y = c(0, 2.5))
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
 
 brms::pp_check(m_bari_vague,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+```{r}
+diag_plot(model = m_bari_vague_sens,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_vague_sens,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) + coord_cartesian(y = c(0, 4))
+
+brms::pp_check(m_bari_vague_sens,
                type = "ecdf_overlay_grouped",
                group = "treatment",
                ndraws = 50)

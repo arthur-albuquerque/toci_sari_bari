@@ -21,6 +21,7 @@ d_logOR = readRDS(
 ma_toci = readRDS(here::here("output", "fits", "ma_toci.Rds"))
 ma_sari = readRDS(here::here("output", "fits", "ma_sari.Rds"))
 ma_bari = readRDS(here::here("output", "fits", "ma_bari.Rds"))
+ma_bari_sens = readRDS(here::here("output", "fits", "ma_bari_sens.Rds"))
 
 # Helper functions to add model information to forest plot
 
@@ -62,8 +63,10 @@ d_toci = d_logOR |>
   dplyr::filter(treatment == "tocilizumab")
 
 d_sari_bari = d_logOR |>
-  dplyr::filter(treatment %in% c("sarilumab","baricitinib")) |> 
+  dplyr::filter(treatment %in% c("sarilumab","baricitinib"),
+                study != "RECOVERY Bari") |> 
   arrange(desc(study), treatment)
+  
 
 # Bayesian meta-analyses overall results (mu), median and 95% HDI
 
@@ -204,8 +207,8 @@ forest_fun_bari_sari = function(){
 
   metafor::forest(d_sari_bari$yi, d_sari_bari$vi,
                   cex=0.75, # text size
-                  ylim=c(0, 21.5), # Y length
-                  rows=c(3:9, 15:17),
+                  ylim=c(0, 22.5), # Y length
+                  rows=c(3:9, 15:18),
                   alim=log(c(0.25, 4)),
                   xlim=c(-8, 3.5), 
                   at=log(c(0.25, 0.5, 1, 2, 4)),
@@ -229,7 +232,8 @@ forest_fun_bari_sari = function(){
                    efac = 1, # polygon size
                    atransf=exp)
   
-  bari = dplyr::filter(d_sari_bari, treatment == "baricitinib")
+  bari = dplyr::filter(d_sari_bari,
+                       treatment == "baricitinib")
   
   text(c(-4,-2.5),
        13,
@@ -316,28 +320,28 @@ forest_fun_bari_sari = function(){
   
   # Headers
   text(mean(c(-4,-2.5)) - 0.1,
-       21.5,
+       22.5,
        "No of events / total",
        font=2,
        cex = 0.7)
   
   # Horizontal line
   segments(-4 - 0.6,
-           21,
+           22,
            -2.5 + 0.35,
-           21)
+           22)
   
-  text(c(-4,-2.5), 20.5, c("Experimental","Control"), font = 2, cex = 0.7)
+  text(c(-4,-2.5), 21.5, c("Experimental","Control"), font = 2, cex = 0.7)
   
   text(c(-0.6,0.6), # X axis
-       18.5, # Y axis
+       19.5, # Y axis
        cex = 0.7, # size
        c("Favors\nExperimental","Favors\nControl"),
        font = 1,
        pos=c(2,4), # Right + Left aligned
        offset=-1)
   
-  text(-7.2,c(18.5, 10.5),
+  text(-7.2,c(19.5, 10.5),
        c("Baricitinib", "Sarilumab"),
        font=4,
        cex = 0.9)
@@ -361,4 +365,123 @@ forest_fun_toci()
 forest_fun_bari_sari()
 
 dev.off()
+
+
+# Sensitivity analysis ----
+
+d_bari_sens = d_logOR |>
+  dplyr::filter(treatment == "baricitinib",
+                study != "RECOVERY Bari (No Toci)") |> 
+  arrange(desc(study))
+
+bari_results_sens = ma_bari_sens |> brms::fixef(summary = F) |>
+  ggdist::median_hdi()
+
+bari_pred_sens = predictions(ma_bari_sens)
+
+forest_sari_sens = function(){
+  
+  metafor::forest(d_bari_sens$yi, d_bari_sens$vi,
+                  cex=0.75, # text size
+                  ylim=c(12, 22.5), # Y length
+                  rows=c(15:18),
+                  alim=log(c(0.25, 4)),
+                  xlim=c(-8, 3.5), 
+                  at=log(c(0.25, 0.5, 1, 2, 4)),
+                  slab=d_bari_sens$study,
+                  ilab=cbind(paste(d_bari_sens$trt_events, "/", d_bari_sens$trt_total),
+                             paste(d_bari_sens$control_events, "/", d_bari_sens$control_total)),
+                  ilab.xpos=c(-4,-2.5),
+                  header="Study",
+                  atransf=exp,
+                  order=d_bari_sens$treatment,
+                  pch = 19) # Circles 
+  
+  abline(h=14) # horizontal line
+  
+  ### set font expansion factor (as in forest() above) and use a bold font
+  par(cex=0.9)
+  
+  metafor::addpoly(x = bari_results_sens$y,
+                   ci.lb = bari_results_sens$ymin,
+                   ci.ub = bari_results_sens$ymax,
+                   
+                   mlab = "Total [95% CrI]",
+                   row=13,
+                   efac = 1, # polygon size
+                   atransf=exp)
+  
+  text(c(-4,-2.5),
+       13,
+       c(paste(sum(d_bari_sens$trt_events), "/", sum(d_bari_sens$trt_total)),
+         paste(sum(d_bari_sens$control_events), "/", sum(d_bari_sens$control_total))),
+       font = 2, cex = 0.75)
+  
+  # Prediction interval
+  colp = "#6b58a6"
+  coll = "#a7a9ac"
+  
+  metafor::addpoly(x = bari_pred_sens$y,
+                   ci.lb = bari_pred_sens$ymin,
+                   ci.ub = bari_pred_sens$ymax,
+                   
+                   pi.lb = bari_pred_sens$ymin, # prediction interval
+                   pi.ub = bari_pred_sens$ymax, # prediction interval
+                   annotate=FALSE,
+                   
+                   mlab = " ", # label
+                   row=12, # location
+                   atransf=exp,
+                   efac = 0.5, # polygon size
+                   col=colp, border=colp
+  )
+  
+  text(-7.95, 12,
+       tau_text(ma_bari_sens),
+       pos=4,
+       cex=0.8)
+  
+  text(1.6, 12,
+       PI_text(bari_pred_sens),
+       pos=4,
+       cex = 0.85)
+  
+  
+  # Headers
+  text(mean(c(-4,-2.5)) - 0.1,
+       22.5,
+       "No of events / total",
+       font=2,
+       cex = 0.7)
+  
+  # Horizontal line
+  segments(-4 - 0.6,
+           22,
+           -2.5 + 0.35,
+           22)
+  
+  text(c(-4,-2.5), 21.5, c("Experimental","Control"), font = 2, cex = 0.7)
+  
+  text(c(-0.6,0.6), # X axis
+       19.5, # Y axis
+       cex = 0.7, # size
+       c("Favors\nExperimental","Favors\nControl"),
+       font = 1,
+       pos=c(2,4), # Right + Left aligned
+       offset=-1)
+  
+  text(-7.2, 19.5,
+       "Baricitinib",
+       font=4,
+       cex = 0.9)
+}
+
+pdf(file = here::here("output", "figures", "supplementary", 
+                      'forest_sari_sens.pdf'),
+    height=4.5, width=7)
+
+forest_sari_sens()
+
+dev.off()
+
 

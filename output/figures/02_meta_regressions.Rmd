@@ -60,6 +60,16 @@ mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
 mr_bari_vague = readRDS(here::here("output", "fits",
                                    "mr_bari_vague.Rds"))
 
+# Sensitivity analysis
+mr_bari_skeptical_sens = readRDS(here::here("output", "fits",
+                                       "mr_bari_skeptical_sens.Rds"))
+mr_bari_optimistic_bari_sens = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_bari_sens.Rds"))
+mr_bari_optimistic_toci_sens = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_toci_sens.Rds"))
+mr_bari_vague_sens = readRDS(here::here("output", "fits",
+                                   "mr_bari_vague_sens.Rds"))
+
 ```
 
 
@@ -198,6 +208,8 @@ parameter_fun = function(model){
 }
   
 ```
+
+# Main analysis
 
 ```{r}
 # Prior information
@@ -420,8 +432,101 @@ ggsave(width = 12,
             "figure2_meta_regressions.pdf")) # File name
 ```
 
-```{r}
+# Sensitivity analysis (Bari)
 
+```{r}
+# Prior information
+
+## Means
+mean_log_bari = log(0.9)
+
+mean_skeptical = log(1)
+
+## SDs
+
+# Assuming a mean = log(1), what is the SD that yields a distribution
+# with 0.025 probability density below log(0.5)?
+bari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
+
+# Assuming a mean = log(0.9), what is the SD that yields a distribution
+# with 0.4 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.4)
+
+# Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
+# distribution with 0.4 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.4)
+
+bari_sd_vague = 4
+```
+
+```{r}
+draws_bari_sens =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_bari_vague_sens)$value,
+    "skeptical" = parameter_fun(mr_bari_skeptical_sens)$value,
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari_sens)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci_sens)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+
+probs_bari_sens = 
+  draws_bari_sens |> 
+  dplyr::group_by(name) |> 
+  summarise(prNI = stringr::str_c(
+    round(100*mean(value < ni_margin)), "%")
+    )
+
+p1_sens = plot_fun(parameter = parameter_fun(mr_bari_vague_sens),
+              color = "#E0C6B6",
+              prior_mean = mean_skeptical,
+              prior_sd = bari_sd_vague,
+              probability = probs_bari_sens[[4,2]],
+              header = "Vague") +
+  ggplot2::labs(title = "Baricitinib vs. Tocilizumab\n")
+
+p2_sens = plot_fun(parameter = parameter_fun(mr_bari_skeptical_sens),
+              color = "gray50",
+              prior_mean = mean_skeptical,
+              prior_sd = bari_sd_skeptical,
+              probability = probs_bari_sens[[3,2]],
+              header = "Skeptical")
+
+p3_sens = plot_fun(parameter = parameter_fun(mr_bari_optimistic_bari_sens),
+              color = pal_bari_sari[3],
+              prior_mean = mean_log_bari,
+              prior_sd = bari_sd_optimistic_bari,
+              probability = probs_bari_sens[[1,2]],
+              header = "Optimistic for Baricitinib")
+
+p4_sens = plot_fun(parameter = parameter_fun(mr_bari_optimistic_toci_sens),
+              color = pal_toci[6],
+              prior_mean = -mean_log_bari,
+              prior_sd = bari_sd_optimistic_toci,
+              probability = probs_bari_sens[[2,2]],
+              header = "Optimistic for Tocilizumab") +
+  theme(plot.margin = margin(20, 20, 40, 20))
+
+p_bari_sens = 
+  (p1_sens / p2_sens / p3_sens / p4_sens + 
+  inset_element(arrows_bari,
+                ignore_tag = TRUE,
+                align_to = "full",
+                left = unit(1.75, 'cm'),
+                bottom = unit(0.2, 'cm'),
+                right = unit(14, 'cm'),
+                top = unit(2.5, 'cm')) 
+  )
+```
+
+```{r include=FALSE}
+
+p_bari_sens
+
+ggsave(width = 6,
+       height = 9,
+       device = cairo_pdf,
+       here::here("output", "figures", "supplementary", # File path
+                  "baricitinib_meta_regressions_sensitivity.pdf"))
 ```
 
 
