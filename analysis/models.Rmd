@@ -20,18 +20,23 @@ In this document, we will fit all models regarding this project. The detailed pr
 
 Let's load libraries and data.
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, results='hide'}
 # Ensures the package "pacman" is installed
 if (!require("pacman")) install.packages("pacman")
 
-pacman::p_load(here,
-               rio,
-               metafor,
-               dplyr,
-               bayesmeta,
-               brms)
+# Install/Load packages
+
+pacman::p_load("rio",
+               "here",
+               "metafor",
+               "dplyr",
+               "bayesmeta",
+               "brms")
 
 remotes::install_github("stan-dev/cmdstanr")
+
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
 
 # Import data
 d = rio::import(here::here("data", "data.xlsx"))
@@ -233,8 +238,18 @@ y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
 $$
 
 where \(y_i\) is the observed mean log odds
-ratio in study \(i\) for either tocilizumab, sarilumab, or baricitinib versus control treatment. We assume these effect sizes are
-normally distributed around the study-specific mean $\theta_i$ along with a known sampling variance, represented by the observed $\sigma_i^2$. We also assume $\theta_i$ is drawn from a normal distribution where $\mu$ is the average effect and $\tau^2$ is the between-study heterogeneity. We will estimate $\mu$ as a function of the estimated population effect size $\beta_0$ and the moderator $x$ multiplied by the coefficient $\beta_1$. $x$ is dummy-coded, where \textbf{0} indicates that the observed $y_i$ is an effect size estimate of \textbf{tocilizumab} compared to control, while \textbf{1} indicates that $y_i$ is an effect size estimate of the \textbf{sarilumab or baricitinib} compared to control.
+ratio in study \(i\) for either tocilizumab, sarilumab, or baricitinib versus
+control treatment. We assume these effect sizes are normally distributed around
+the study-specific mean $\theta_i$ along with a known sampling variance,
+represented by the observed $\sigma_i^2$. We also assume $\theta_i$ is drawn
+from a normal distribution where $\mu$ is the average effect and $\tau^2$ is the
+between-study heterogeneity. We will estimate $\mu$ as a function of the
+estimated population effect size $\beta_0$ and the
+moderator $x$ multiplied by the coefficient $\beta_1$. $x$ is dummy-coded,
+where \textbf{0} indicates that the observed $y_i$ is an effect size estimate
+of \textbf{tocilizumab} compared to control, while \textbf{1} indicates that
+$y_i$ is an effect size estimate of the \textbf{sarilumab or baricitinib}
+compared to control.
 
 ## Tocilizumab vs. Sarilumab
 

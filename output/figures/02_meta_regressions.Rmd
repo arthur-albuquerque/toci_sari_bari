@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE, results = 'hide'}
 # Load packages
 
 # Ensures the package "pacman" is installed
@@ -28,9 +28,11 @@ pacman::p_load(here,
                patchwork,
                cowplot,
                pdftools,
-               gt)
+               gt,
+               MetBrewer)
 
-pacman::p_install_gh("BlakeRMills/MetBrewer")
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
 
 # Colors
 pal = MetBrewer::met.brewer(name="Lakota",n=6,type="discrete")
@@ -42,12 +44,18 @@ pal_bari_sari = MetBrewer::met.brewer(name="VanGogh1",n=7,type="discrete")
 # Sari vs. Toci
 mr_sari_skeptical = readRDS(here::here("output", "fits",
                                        "mr_sari_skeptical.Rds"))
-mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_sari.Rds"))
-mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_toci.Rds"))
+mr_sari_optimistic_sari_remapcap =
+  readRDS(here::here("output", "fits", "sensitivity_analyses",
+                     "mr_sari_optimistic_sari_remapcap.Rds"))
+mr_sari_optimistic_toci_remapcap =
+  readRDS(here::here("output", "fits", "sensitivity_analyses",
+                     "mr_sari_optimistic_toci_remapcap.Rds"))
+
+
 mr_sari_vague = readRDS(here::here("output", "fits",
                                    "mr_sari_vague.Rds"))
+
+
 
 # Bari vs. Toci
 
@@ -103,7 +111,7 @@ plot_fun = function(parameter,
   
   geom_vline(xintercept = ni_margin, linetype = 2, color = "gray50") +
     
-  annotate("text", x = log(1), y = 3.2,
+  annotate("text", x = log(1.05), y = 4,
            label = probability, size = 5) +
   
   scale_y_continuous(limits = c(0, 4),
@@ -236,6 +244,7 @@ bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.4)
 bari_sd_vague = 4
 ```
 
+
 ```{r}
 draws_bari =
   dplyr::tibble(
@@ -296,10 +305,11 @@ p_bari =
 ```
 
 
-```{r}
+```{r meta regressions sensitivity prior info}
 ## Means
 
-# Figure S3 in https://doi.org/10.1101/2021.06.18.21259133;
+# Source: Figure S3, Appendix Appendix page 46 
+# https://www.medrxiv.org/content/10.1101/2021.06.18.21259133v2.Appendix-material
 # version posted June 22, 2021
 reciprocal_remap_cap = 1/1.05
 mean_log_sari = log(reciprocal_remap_cap)
@@ -312,13 +322,15 @@ mean_skeptical = log(1)
 # with 0.025 probability density below log(0.5)?
 sari_sd_skeptical = (mean_skeptical - log(0.5))/qnorm(1-0.025)
 
-# Assuming a mean = log(0.952), what is the SD that yields a distribution
-# with 0.4 probability density above log(1)?
-sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.4)
+# Formula to extract standard error (SE)
 
-# Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
-# distribution with 0.4 probability density below log(1)?
-sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.4)
+# Transform the results into the log scale and calculate the SE
+# https://training.cochrane.org/handbook/current/chapter-06#section-6-3-2
+
+width = log(1.35) - log(0.85)
+
+sari_sd_optimistic_sari = width/(2*1.96)
+sari_sd_optimistic_toci = sari_sd_optimistic_sari
 
 sari_sd_vague = 4
 ```
@@ -328,8 +340,8 @@ draws_sari =
   dplyr::tibble(
     "vague" = parameter_fun(mr_sari_vague)$value,
     "skeptical" = parameter_fun(mr_sari_skeptical)$value,
-    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
-    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari_remapcap)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci_remapcap)$value
   ) |> 
   tidyr::pivot_longer(1:4)
 
@@ -355,19 +367,19 @@ p2 = plot_fun(parameter = parameter_fun(mr_sari_skeptical),
               probability = probs_sari[[3,2]],
               header = "Skeptical")
 
-p3 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari),
+p3 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari_remapcap),
               color = pal_bari_sari[7],
               prior_mean = mean_log_sari,
               prior_sd = sari_sd_optimistic_sari,
               probability = probs_sari[[1,2]],
-              header = "Optimistic for Sarilumab")
+              header = "Optimistic for Sarilumab (REMAP-CAP)")
 
-p4 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci),
+p4 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci_remapcap),
               color = pal_toci[6],
               prior_mean = -mean_log_sari,
               prior_sd = sari_sd_optimistic_toci,
               probability = probs_sari[[2,2]],
-              header = "Optimistic for Tocilizumab") +
+              header = "Optimistic for Tocilizumab (inverse REMAP-CAP)") +
   theme(plot.margin = margin(20, 20, 40, 20))
 
 p_sari = 
@@ -528,6 +540,7 @@ ggsave(width = 6,
        here::here("output", "figures", "supplementary", # File path
                   "baricitinib_meta_regressions_sensitivity.pdf"))
 ```
+
 
 
 

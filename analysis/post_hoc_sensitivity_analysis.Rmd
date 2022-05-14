@@ -18,9 +18,13 @@ pacman::p_load(here,
                dplyr,
                ggplot2,
                bayesmeta,
-               brms)
+               brms,
+               metafor)
 
 remotes::install_github("stan-dev/cmdstanr")
+
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
 
 # Load data
 d_logOR = readRDS(
@@ -48,50 +52,36 @@ $$
 
 ```{r}
 ## Means
-
 # Source: Figure S3, Supplementary Appendix page 46 
 # https://www.medrxiv.org/content/10.1101/2021.06.18.21259133v2.supplementary-material
 # version posted June 22, 2021
 reciprocal_remap_cap = 1/1.05
 mean_log_sari = log(reciprocal_remap_cap)
-
 ## SDs
-
 # Formula to extract standard error (SE)
-
 # Transform the results into the log scale and calculate the SE
 # https://training.cochrane.org/handbook/current/chapter-06#section-6-3-2
-
 width = log(1.35) - log(0.85)
-
 sari_sd_optimistic_sari = width/(2*1.96)
 sari_sd_optimistic_toci = sari_sd_optimistic_sari
 ```
 
 ```{r}
 # General model characteristics 
-
 ## Formula
 mf = 
   formula(yi | se(sei) ~ 0 + Intercept + treatment + (1 | study))
-
 ## Priors for beta_0 and tau
-
 informative = bayesmeta::TurnerEtAlPrior("all-cause mortality",
                                          "pharmacological",
                                          "placebo / control")
-
-
 logmean = informative$parameters["tau", "mu"]
 logsd = informative$parameters["tau", "sigma"]
-
 # tau:
 # logmean
 # -1.975
-
 # logsd
 # 0.67
-
 priors = 
   brms::prior(normal(0, 0.75), class = "b", coef = "Intercept") +
   brms::prior(lognormal(-1.975, 0.67), class = "sd", group = "study")
@@ -100,15 +90,11 @@ priors =
 Fit models
 
 ```{r}
-
 ## "Optimistic for Sarilumab" model
-
 # mean_log_sari
 # -0.04879016
-
 # sari_sd_optimistic_sari
 # 0.1180162
-
 m_sari_optimistic_sari_remapcap =
   brms::brm(
     
@@ -132,15 +118,11 @@ m_sari_optimistic_sari_remapcap =
                     "mr_sari_optimistic_sari_remapcap.Rds"),
   file_refit = "on_change"
 )
-
 ## "Optimistic for Tocilizumab" model
-
 # -mean_log_sari
 # 0.04879016
-
 # sari_sd_optimistic_toci
 # 0.1180162
-
 m_sari_optimistic_toci_remapcap =
   brms::brm(
     
@@ -164,7 +146,6 @@ m_sari_optimistic_toci_remapcap =
                     "mr_sari_optimistic_toci_remapcap.Rds"),
   file_refit = "on_change"
 )
-
 ```
 
 # Model diagnostics

@@ -13,7 +13,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE, results = 'hide'}
 # Load packages
 
 # Ensures the package "pacman" is installed
@@ -26,15 +26,26 @@ pacman::p_load(here,
                tidybayes,
                gt)
 
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
+
+# Load table 1 data
+pre_table1 = rio::import(
+  here::here("data", "table1_data.xlsx")
+)
+
+
 # Load meta-regressions
 
 # Sari vs. Toci
 mr_sari_skeptical = readRDS(here::here("output", "fits",
                                        "mr_sari_skeptical.Rds"))
-mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_sari.Rds"))
-mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_toci.Rds"))
+mr_sari_optimistic_sari_remapcap =
+  readRDS(here::here("output", "fits", "sensitivity_analyses",
+                     "mr_sari_optimistic_sari_remapcap.Rds"))
+mr_sari_optimistic_toci_remapcap =
+  readRDS(here::here("output", "fits", "sensitivity_analyses",
+                     "mr_sari_optimistic_toci_remapcap.Rds"))
 mr_sari_vague = readRDS(here::here("output", "fits",
                                    "mr_sari_vague.Rds"))
 
@@ -62,6 +73,70 @@ mr_bari_vague_sens = readRDS(here::here("output", "fits",
 
 ```
 
+# Table 1
+
+Overall characteristics of included RCTs
+
+```{r}
+pre_table1 |>  
+  # Re-order columns
+  dplyr::select(study_name, intervention,
+                age_control, male_control, time_symptom_control, pcr_control,
+                simple_oxygen_control, niv_control, imv_control,
+                age_exp, male_exp, time_symptom_exp, pcr_exp,
+                simple_oxygen_exp, niv_exp, imv_exp
+                ) |> 
+  dplyr::rename("Study" = study_name,
+                "Age" = age_control,
+                "Male"= male_control,
+                "Time since Symptom Onset" = time_symptom_control,
+                "Lab Confirmed COVID-19" = pcr_control,
+                "Simple Oxygen Only" = simple_oxygen_control,
+                "Noninvasive Ventilation" = niv_control,
+                "Invasive Mechanical Ventilation" = imv_control,
+                
+                "Age " = age_exp,
+                "Male "= male_exp,
+                "Time since Symptom Onset " = time_symptom_exp,
+                "Lab Confirmed COVID-19 " = pcr_exp,
+                "Simple Oxygen Only " = simple_oxygen_exp,
+                "Noninvasive Ventilation " = niv_exp,
+                "Invasive Mechanical Ventilation " = imv_exp
+                ) |> 
+  dplyr::group_by(intervention) |> 
+  gt::gt() |> 
+  gt::tab_spanner(label = "Control Treatment",
+                  columns = 2:9) |> 
+  gt::tab_spanner(label = "Experimental Treatment",
+                  columns = 10:dplyr::last_col()) |> 
+  gt::tab_footnote(
+    footnote = "Median (IQR) or Mean (SD)",
+    locations = gt::cells_column_labels(
+      columns = c("Age", "Age ",
+                  "Time since Symptom Onset", "Time since Symptom Onset ",
+                  )
+      )
+    ) |> 
+  gt::tab_footnote(
+    footnote = "%",
+    locations = gt::cells_column_labels(
+      columns = c("Male", "Male ",
+                  "Lab Confirmed COVID-19", "Lab Confirmed COVID-19 ",
+                  "Simple Oxygen Only", "Simple Oxygen Only ",
+                  "Noninvasive Ventilation", "Noninvasive Ventilation ",
+                  "Invasive Mechanical Ventilation", "Invasive Mechanical Ventilation "
+                  )
+      )
+    ) |> 
+  tab_source_note(
+    source_note =
+      md("Patient characteristics specific to those co-treated with corticosteroids were not systematically reported in these RCTs. Thus, this table includes characteristics to all participants randomized in these studies, and not necessarily to only patients treated with corticosteroids. "
+  )
+  ) |> 
+  gtsave("table_1.html",
+         path =  here("output", "tables"))
+```
+
 ```{r}
 # Function to extract posterior draws more easily
 
@@ -84,8 +159,8 @@ draws_sari =
   dplyr::tibble(
     "vague" = parameter_fun(mr_sari_vague)$value,
     "skeptical" = parameter_fun(mr_sari_skeptical)$value,
-    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
-    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari_remapcap)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci_remapcap)$value
   ) |> 
   tidyr::pivot_longer(1:4)
 
@@ -170,12 +245,12 @@ results_sari = dplyr::left_join(ror_sari, proba_sari) |>
     Belief = dplyr::case_when(
       Belief == "vague" ~ "Vague",
       Belief == "skeptical" ~ "Skeptical",
-      Belief == "optimistic_sari" ~ "Optimistic for Sarilumab",
-      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+      Belief == "optimistic_sari" ~ "Optimistic for Sarilumab (REMAP-CAP)",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab (inverse REMAP-CAP)"),
     Belief = factor(Belief, levels = c("Vague",
                                        "Skeptical",
-                                       "Optimistic for Sarilumab",
-                                       "Optimistic for Tocilizumab"))
+                                       "Optimistic for Sarilumab (REMAP-CAP)",
+                                       "Optimistic for Tocilizumab (inverse REMAP-CAP)"))
     ) |> 
   dplyr::arrange(Belief)
 
@@ -183,8 +258,8 @@ pre_table2 =
   dplyr::bind_rows(results_bari, results_sari) |> 
   dplyr::group_by(treatment)
 
-# saveRDS(pre_table2,
-#         here("output", "tables", "table_2_data.Rds"))
+saveRDS(pre_table2,
+        here("output", "tables", "table_2_data.Rds"))
 
 
 table2 = 
@@ -218,12 +293,12 @@ table2 =
     ) |> 
   gt::tab_source_note(
     source_note =
-      md("Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+      md("Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
   )
 
-# table2 |> 
-#   gt::gtsave("table_2.html",
-#          path =  here::here("output", "tables"))
+table2 |> 
+ gt::gtsave("table_2.html",
+        path =  here::here("output", "tables"))
 
 
 ```
@@ -271,8 +346,8 @@ pre_table_sens = dplyr::left_join(ror_bari_sens, proba_bari_sens) |>
   dplyr::arrange(Belief) |> 
   dplyr::group_by(treatment)
 
-# saveRDS(pre_table_sens,
-#         here("output", "tables", "supplementary", "table_sens_data.Rds"))
+saveRDS(pre_table_sens,
+        here("output", "tables", "supplementary", "table_sens_data.Rds"))
 
 ```
 

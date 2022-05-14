@@ -1,6 +1,6 @@
 ---
 title: "**Appendix**"
-subtitle: '**Effect of Tocilizumab, Sarilumab, and Baricitinib on Mortality Among Patients Hospitalized for COVID-19 Treated with Corticosteroids: A Systematic Review and Meta-Regression**'
+subtitle: '**Effect of Tocilizumab, Sarilumab, and Baricitinib on Mortality Among Patients Hospitalized for COVID-19 Treated with Corticosteroids: A Systematic Review and Meta-Analysis**'
 output:
   pdf_document: 
     keep_tex: true 
@@ -31,14 +31,14 @@ header-includes:
   - \author[6,7]{Emily G. McDonald MD MSc}
   - \author[5,8]{James M. Brophy MD PhD}
   - \author[4,5,6]{Todd C. Lee MD MPH}
-  - \affil[1]{\small School of Medicine, Universidade Federal do Rio de Janeiro, Brazil}
-  - \affil[2]{Department of Nutrition, Universidade Federal de Ciências da Saúde de Porto Alegre, Brazil}
-  - \affil[3]{HCor Research Institute, Brazil}
-  - \affil[4]{Division of Infectious Diseases, Department of Medicine, McGill University, Canada}
-  - \affil[5]{Department of Epidemiology, Occupational Health, and Biostatistics, McGill University, Canada}
-  - \affil[6]{Clinical Practice Assessment Unit, Department of Medicine, McGill University, Canada}
-  - \affil[7]{Division of General Internal Medicine, Department of Medicine, McGill University, Canada}
-  - \affil[8]{Division of Cardiology, Department of Medicine, McGill University, Canada}
+  - \affil[1]{\small School of Medicine, Universidade Federal do Rio de Janeiro, Rio de Janeiro, Brazil}
+  - \affil[2]{Department of Nutrition, Universidade Federal de Ciências da Saúde de Porto Alegre, Porto Alegre, Brazil}
+  - \affil[3]{HCor Research Institute, São Paulo, Brazil}
+  - \affil[4]{Division of Infectious Diseases, Department of Medicine, McGill University, Montréal, Canada}
+  - \affil[5]{Department of Epidemiology, Occupational Health, and Biostatistics, McGill University, Montréal, Canada}
+  - \affil[6]{Clinical Practice Assessment Unit, Department of Medicine, McGill University, Montréal, Canada}
+  - \affil[7]{Division of General Internal Medicine, Department of Medicine, McGill University, Montréal, Canada}
+  - \affil[8]{Division of Cardiology, Department of Medicine, McGill University, Montréal, Canada}
   
 # https://www.overleaf.com/learn/latex/Table_of_contents
   - \renewcommand\contentsname{Table of Contents}
@@ -57,7 +57,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r packages}
+```{r packages, message=FALSE, warning=FALSE, results='hide'}
 # Load packages
 
 # Ensures the package "pacman" is installed
@@ -75,13 +75,20 @@ pacman::p_load(here,
                kableExtra,
                flextable,
                extraDistr,
-               robvis)
+               robvis,
+               MetBrewer)
 
-pacman::p_install_gh("BlakeRMills/MetBrewer")
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
 
 # Load data
 d_logOR = readRDS(
   here::here("output", "data", "effect_sizes.Rds")
+)
+
+# Load table 1 data
+pre_table1 = rio::import(
+  here::here("data", "table1_data.xlsx")
 )
 
 rob = rio::import(
@@ -101,27 +108,6 @@ ma_bari_sens = readRDS(here::here("output", "fits", "ma_bari_sens.Rds"))
 
 # Load main meta-regressions
 
-## Sari vs. Toci
-mr_sari_skeptical = readRDS(here::here("output", "fits",
-                                       "mr_sari_skeptical.Rds"))
-mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_sari.Rds"))
-mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
-                                             "mr_sari_optimistic_toci.Rds"))
-mr_sari_vague = readRDS(here::here("output", "fits",
-                                   "mr_sari_vague.Rds"))
-
-## Bari vs. Toci
-
-mr_bari_skeptical = readRDS(here::here("output", "fits",
-                                       "mr_bari_skeptical.Rds"))
-mr_bari_optimistic_bari = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_bari.Rds"))
-mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_toci.Rds"))
-mr_bari_vague = readRDS(here::here("output", "fits",
-                                   "mr_bari_vague.Rds"))
-
 mr_bari_skeptical_sens = readRDS(here::here("output", "fits",
                                        "mr_bari_skeptical_sens.Rds"))
 mr_bari_optimistic_bari_sens = readRDS(here::here("output", "fits",
@@ -132,12 +118,10 @@ mr_bari_vague_sens = readRDS(here::here("output", "fits",
                                    "mr_bari_vague_sens.Rds"))
 
 # Sensitivity analyses: sarilumab meta-regressions
-mr_sari_optimistic_sari_remapcap =
-  readRDS(here::here("output", "fits", "sensitivity_analyses",
-                     "mr_sari_optimistic_sari_remapcap.Rds"))
-mr_sari_optimistic_toci_remapcap =
-  readRDS(here::here("output", "fits", "sensitivity_analyses",
-                     "mr_sari_optimistic_toci_remapcap.Rds"))
+mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_sari.Rds"))
+mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_sari_optimistic_toci.Rds"))
 
 # Load meta regression table data
 pre_table_sens = readRDS(
@@ -249,7 +233,7 @@ Baricitinib: \#1 AND \#2 AND \#5
 ```{r medrxiv}
 data.frame(
   "Query" = "#1",
-  "Terms" = '(sarilumab OR baricitinib OR tocilizumab) AND (covid-19 OR coronavirus OR covid) AND random*" and abstract or title "random randomized randomly randomised placebo-controlled'
+  "Terms" = '(sarilumab OR baricitinib OR tocilizumab) AND (covid-19 OR coronavirus OR covid) AND random* and abstract or title "random randomized randomly randomised placebo-controlled"'
 ) |>
   kableExtra::kbl(booktabs = F) |>
   kableExtra::kable_styling(latex_options = c("hold_position","striped"),
@@ -607,15 +591,23 @@ deviation.
 
 In the model comparing **sarilumab** to tocilizumab, the beliefs are: 
 
-* “Skeptical", which expects no difference between sarilumab and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$
+* “Skeptical", which expects no difference between sarilumab and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$. 
+Results from this prior take part in the main meta-regression figure in
+this article. 
 
-* “Optimistic for Sarilumab", which expects a greater mortality reduction due to sarilumab use in comparison to tocilizumab. The mean is centered at $0.952$ (linear scale, ratio of odds ratios), which was based on the single study that directly compared sarilumab to tocilizumab (REMAP-CAP).[@zotero-3144] In this study, they assessed “hospital survival" and an odds ratio greater than 1 indicated greater in-hospital mortality reduction due to sarilumab use in comparison to tocilzumab. As shown in their Figure S3, the median odds ratio of sarilumab vs. tocilizumab was 1.05, indicating a greater odds of hospital survival due to sarilumab. However, in the present study, we will assess mortality (not hospital survival), and an odds ratio lower (not greater) than 1 represents greater mortality reduction due to sarilumab use. Thus, to guide this belief based on the study mentioned above, we calculated the reciprocal of 1.05 ($1/1.05$), which yields $0.952$. $\operatorname{Normal}(-0.049, 0.193^2)$
+* “Optimistic for Sarilumab", which expects a greater mortality reduction due to sarilumab use in comparison to tocilizumab. The mean is centered at $0.952$ (linear scale, ratio of odds ratios), which was based on the single study that directly compared sarilumab to tocilizumab (REMAP-CAP).[@zotero-3144] In this study, they assessed “hospital survival" and an odds ratio greater than 1 indicated greater in-hospital mortality reduction due to sarilumab use in comparison to tocilzumab. As shown in their Figure S3, the median odds ratio of sarilumab vs. tocilizumab was 1.05, indicating a greater odds of hospital survival due to sarilumab. However, in the present study, we will assess mortality (not hospital survival), and an odds ratio lower (not greater) than 1 represents greater mortality reduction due to sarilumab use. Thus, to guide this belief based on the study mentioned above, we calculated the reciprocal of 1.05 ($1/1.05$), which yields $0.952$. $\operatorname{Normal}(-0.049, 0.193^2)$.
+Results from this prior take part in the Appendix meta-regression figure in
+this article. 
   
   Further, we considered that there is 40\% of probability that the ratio of odds ratios is greater than $1$. We chose 40\% because the single study that directly compared sarilumab to tocilizumab found 34\% of probability density for tocilizumab's superiority over sarilumab.[@zotero-3144] However, this was the first and only study and therefore likely to be an over-estimate and not to include potential between study variability. We then elected to see a 40\% of probability for tocilizumab's superiority over sarilumab in this prior as being a "realistic optimistic for Sarilumab" prior.[@zotero-3144] Although not identical to the 30\% suggested by Zampieri et al. -- which we consider too informative in this case, given that it would be more informative than the study mentioned above -- we believe this prior represents weak belief strength.[@zampieri2021]
 
 * “Optimistic for Tocilizumab", which expects a greater mortality reduction due to tocilizumab use in comparison to sarilumab. The mean is centered at $1.05$, the reciprocal of $0.952$. Similarly, this prior belief will also have a weak strength, represented by 40\% of probability that the ratio of odds ratios is lower than $1$.[@zampieri2021] $\operatorname{Normal}(0.049, 0.193^2)$
+Results from this prior take part in the Appendix meta-regression figure in
+this article. 
 
-* “Vague", which represents no prior belief with no strength. $\operatorname{Normal}(0, 4^2)$
+* “Vague", which represents no prior belief with no strength. $\operatorname{Normal}(0, 4^2)$.
+Results from this prior take part in the main meta-regression figure in
+this article. 
 
 The first three distributions are shown below:
 
@@ -879,13 +871,21 @@ probability density below $1$.
 
 In the model comparing **baricitinib** to tocilizumab, the beliefs are: 
 
-* “Skeptical", which expects no difference between baricitinib and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$
+* “Skeptical", which expects no difference between baricitinib and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$.
+Results from this prior take part in the main meta-regression figure in
+this article. 
 
-* “Optimistic for Baricitinib", which expects a greater mortality reduction due to baricitinib use in comparison to tocilizumab. The mean is centered at $0.9$ (linear scale, ratio of odds ratios), which was arbitrarily chosen based on clinical judgment that a 10\% relative difference is clinically important. Because there was no information previously available, we considered that there is 40\% of probability that the ratio of odds ratios is greater than 1, representing a weak belief strength.[@zampieri2021] $\operatorname{Normal}(-0.105, 0.416^2)$
+* “Optimistic for Baricitinib", which expects a greater mortality reduction due to baricitinib use in comparison to tocilizumab. The mean is centered at $0.9$ (linear scale, ratio of odds ratios), which was arbitrarily chosen based on clinical judgment that a 10\% relative difference is clinically important. Because there was no information previously available, we considered that there is 40\% of probability that the ratio of odds ratios is greater than 1, representing a weak belief strength.[@zampieri2021] $\operatorname{Normal}(-0.105, 0.416^2)$. Results from this prior take part in
+the main meta-regression figure in
+this article. 
 
-* “Optimistic for Tocilizumab", which expects a greater mortality reduction due to tocilizumab use in comparison to sarilumab. The mean is centered at $1.11$, the reciprocal of $0.9$. Similarly, this prior belief will also have a weak strength, represented by 40\% of probability that the ratio of odds ratios is lower than $1$.[@zampieri2021] $\operatorname{Normal}(0.105, 0.416^2)$
+* “Optimistic for Tocilizumab", which expects a greater mortality reduction due to tocilizumab use in comparison to sarilumab. The mean is centered at $1.11$, the reciprocal of $0.9$. Similarly, this prior belief will also have a weak strength, represented by 40\% of probability that the ratio of odds ratios is lower than $1$.[@zampieri2021] $\operatorname{Normal}(0.105, 0.416^2)$.
+Results from this prior take part in the main meta-regression figure in
+this article. 
 
-* “Vague", which represents no prior belief with no strength. $\operatorname{Normal}(0, 4^2)$
+* “Vague", which represents no prior belief with no strength. $\operatorname{Normal}(0, 4^2)$.
+Results from this prior take part in the main meta-regression figure in
+this article. 
 
 The first three distributions are shown below:
 
@@ -1006,12 +1006,14 @@ One could argue that baricitinib's priors are stronger than sarilumab's given di
 
 \newpage
 
-### Post-hoc Sensitivity Analysis
+### Post-hoc Analysis
 
 Regarding the sarilumab vs. tocilizumab meta-regression model, we also performed
-a post-hoc sensitivity analysis with a different set of priors. 
+a post-hoc analysis with a different set of priors. 
 
-We fitted the exact same model, but with different “Optimistic for Sarilumab" and “Optimistic for Tocilizumab" priors (hereafter, “Optimistic for Sarilumab (REMAP-CAP)" and “Optimistic for Tocilizumab (inverse REMAP-CAP)":
+We fitted the exact same model, but with different “Optimistic for Sarilumab"
+and “Optimistic for Tocilizumab" priors (hereafter, “Optimistic for Sarilumab
+(REMAP-CAP)" and “Optimistic for Tocilizumab (inverse REMAP-CAP)":
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
@@ -1031,6 +1033,9 @@ The new standard deviation of $0.118$ was obtained through the formula:[@cochran
 $$\sigma = \frac{\ln(\operatorname{UCL}) - \ln(\operatorname{LCL})}{3.92}$$
 
 where $UCL$ is $1.35$, and $LCL$ is $0.85$, as depicted in the Figure S3 of the RCT cited above (REMAP-CAP). In comparison to the 40\% probability density above/below $1.0$ yielded by the main priors in the section before, these sensitivity priors yield $34\%$, highlighting its greater strength.
+
+Results from these priors take part in the main meta-regression figure in
+this article. 
 
 \newpage
 
@@ -1056,22 +1061,62 @@ where $\gamma$ is the estimated noninferiority margin, $\theta$ is the tocilizum
 
 <div id="refs"></div>
 
-\blandscape
+\newpage
 
 # Appendix Results
 
-## Appendix Figure 1: PRISMA 2020 Flow Diagram
+\newgeometry{left=0.5in,right=0.5in,top=0.1in,bottom=0.1in, noheadfoot}
 
+\blandscape
 
-```{r out.width='0.88\\linewidth'}
-knitr::include_graphics(here::here('PRISMA_2020_flow_diagram_correct.png'))
+## Appendix Table 1: Trial Characteristics (Part 1)
+
+```{r}
+pre_table1 |>  
+  # Re-order columns
+  dplyr::select(study_name, intervention, 
+                article_type, amount_sites, mortality_followup, dose) |> 
+  dplyr::rename("Study" = study_name,
+                "Article Type" = article_type,
+                "Dose" = dose,
+                "Follow-up Length" = mortality_followup,
+                "Number of Sites" = amount_sites) |> 
+  dplyr::group_by(intervention) |> 
+  gt::gt() |> 
+  gt::cols_align(
+    align = "left",
+    columns = everything()
+    ) |> 
+  gt::tab_footnote(
+  footnote = "Days",
+  locations = gt::cells_column_labels(
+    columns = "Follow-up Length")
+  )
 ```
 
+\newpage
+
+## Appendix Table 1: Trial Characteristics (Part 2)
+
+```{r}
+pre_table1 |>  
+  # Re-order columns
+  dplyr::select(1,3, 5, 6) |> 
+  dplyr::rename("Study" = study_name,
+                "Drug Regimen" = regimen,
+                "Control Type" = control_type) |> 
+  dplyr::group_by(intervention) |> 
+  gt::gt()
+```
 
 \elandscape
 
+\restoregeometry
 
-## Appendix Figure 2: Risk of Bias Assessment
+\newpage
+
+
+## Appendix Figure 1: Risk of Bias Assessment
 
 ```{r}
 
@@ -1158,7 +1203,7 @@ assessment was performed by the WHO React Working Group, as explained in our
 Methods section.
 
 
-## Appendix Figure 3: Risk of Bias Proportion
+## Appendix Figure 2: Risk of Bias Proportion
 
 ```{r fig.height=8, fig.width=8}
 rob_toci = 
@@ -1188,7 +1233,7 @@ Tocilizumab studies; Panel B: Baricitinib; Panel C: Sarilumab.
 \newpage
 
 
-## Appendix Figure 4: Posterior Probabilities (Odds Ratio)
+## Appendix Figure 3: Posterior Probabilities (Odds Ratio)
 
 ```{r sensitivity models}
 # Models with less informative priors on tau (Half-Normal[0.5])
@@ -1507,7 +1552,7 @@ $Normal(0, 0.75^2)$ prior distribution for average effect ($\mu$).
 
 \newpage
 
-## Appendix Figure 5: Baricitinib Sensitivity Meta-Analysis
+## Appendix Figure 4: Baricitinib Sensitivity Meta-Analysis
 
 ```{r}
 knitr::include_graphics(here::here("output", "figures", "supplementary",
@@ -1520,254 +1565,7 @@ Forest plot of Bayesian random-effect meta-analysis of baricitinib versus contro
 
 \newpage
 
-
-## Appendix Figure 6: Posterior Distributions (Risk Difference)
-
-```{r risk differences data wrangle}
-
-# Extract posterior draws  
-toci = 
-  ma_toci |> 
-  tidybayes::tidy_draws() |> 
-  dplyr::summarise(OR = exp(b_Intercept)) 
-
-bari = 
-  ma_bari |> 
-  tidybayes::tidy_draws() |> 
-  dplyr::summarise(OR = exp(b_Intercept)) 
-
-sari = 
-  ma_sari |> 
-  tidybayes::tidy_draws() |> 
-  dplyr::summarise(OR = exp(b_Intercept)) 
-
-  
-# Apply Doi et al 2020 formula across multiple baseline risks
-# Equation 11 in https://doi.org/10.1016/j.jclinepi.2020.08.019
-
-# BR = Baseline Risk
-# OR = Odds Ratio
-
-RD_fun = function(x)
-  {
-( BR*(BR-1)*(x$OR-1) ) / ( BR*x$OR - BR+1)
-}
-
-# Define range of baseline risks
-BR = seq(0.05, 0.4, 0.025)
-
-toci_RD = 
-  # Apply loop
-  plyr::adply(.data = toci, 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(toci)[1], paste0("RD_", BR)))
-
-
-colnames(toci_pred) = "OR"
-
-toci_RD_pred = 
-  # Apply loop
-  plyr::adply(.data = exp(toci_pred), # exp() because toci_pred is in the log scale 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(toci_pred)[1], paste0("RD_", BR)))
-
-
-bari_RD = 
-  # Apply loop
-  plyr::adply(.data = bari, 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(toci)[1], paste0("RD_", BR)))
-
-colnames(bari_pred) = "OR"
-
-bari_RD_pred = 
-  # Apply loop
-  plyr::adply(.data = exp(bari_pred), # exp() because bari_pred is in the log scale 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(bari_pred)[1], paste0("RD_", BR)))
-
-sari_RD = 
-  # Apply loop
-  plyr::adply(.data = sari, 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(toci)[1], paste0("RD_", BR)))
-
-colnames(sari_pred) = "OR"
-
-sari_RD_pred = 
-  # Apply loop
-  plyr::adply(.data = exp(sari_pred), # exp() because sari_pred is in the log scale 
-              .margins = 1, 
-              .fun = function(x) RD_fun(x)) |>  
-  # Change columns name
-  setNames(c(colnames(sari_pred)[1], paste0("RD_", BR)))
-```
-
-```{r RD 95% CrIs plot, fig.width=4, include=FALSE}
-# Colors
-pal_toci = MetBrewer::met.brewer(name="OKeeffe2",n=7,type="discrete")
-pal_bari_sari = MetBrewer::met.brewer(name="VanGogh1",n=7,type="discrete")
-
-wrangle_fun = function(dataa){
-  dataa |>  
-  dplyr::select(-OR) |>   
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "Risk_control", values_to = "RD"
-  ) |> 
-  # Extract the risk control value
-  tidytable::separate.(Risk_control,
-           sep = "_",
-           into = c(NA, "risk")
-  ) |> 
-  dplyr::mutate(risk = as.numeric(risk)) |>   
-  # Transform to percentage
-  dplyr::mutate(risk = risk*100,
-                RD = RD*100) |> 
-  # Estimate the median and CrIs per baseline risk
-  dplyr::group_by(risk) |> 
-  tidybayes::median_hdi(RD,
-                        .width = .95)
-}
-
-plot_RD = function(data1, data2, color1, color2, ylab = F, Title){
-  # Plot!
-ggplot() +
-  aes(x = risk, y = RD, ymin = .lower, ymax = .upper) +
-  geom_lineribbon(data = wrangle_fun(data2), fill = color2) +
-  geom_lineribbon(data = wrangle_fun(data1), fill = color1) +
-  
-  geom_hline(yintercept = 0, linetype = 2, color = "gray30") +
-  scale_y_continuous(breaks = c(seq(-7.5, 20, 5), 0)) +
-  scale_x_continuous(breaks = seq(0, 60, 10)) +
-  coord_cartesian(y = c(-10, 21)) +
-  labs(x = "\nRisk Under Control Treatment (%)",
-       y = NULL,
-       title = Title) +
-  ggdist::theme_ggdist() +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 13,
-                                 face="bold",
-                                  hjust = 0.5 # centralize
-                                 ) 
-        ) +
-  # Add Y axis label only for Tocilizumab Panel
-  # https://stackoverflow.com/questions/22915337/if-else-condition-in-ggplot-to-add-an-extra-layer
-  {if (ylab) labs(y = "Risk Difference (%)\n")} 
-}
-
-p1 = plot_RD(data1 = toci_RD, data2 = toci_RD_pred,
-             pal_toci[6], pal_toci[4], ylab = T,
-             Title =  "\nTocilizumab")
-p2 = plot_RD(data1 = bari_RD, data2 = bari_RD_pred,
-             pal_bari_sari[3], pal_bari_sari[4],
-             Title = "\nBaricitinib")
-p3 = plot_RD(data1 = sari_RD, data2 = sari_RD_pred,
-             pal_bari_sari[7], pal_bari_sari[6],
-             Title = "\nSarilumab")
-
-```
-
-```{r, fig.width=10, fig.height=4}
-p1 + p2 + p3 
-```
-
-Meta-analysis average effect marginal posterior distributions in the risk difference scale (Y-axis) across multiple mortality risks under control treatment (X-axis) for each experimental drug. Black solid lines represent the median, darker colored areas represent the 95% CrIs of average effect, and lighter areas represent the 95% CrIs of predictive effect.
-Risk difference greater than 0 favors experimental drug over control.
-
-Underlying prior distributions are $Normal(0, 0.75^2)$ for the average effect
-($\mu$), and $\operatorname{Log-Normal}[-1.975, 0.67^2]$ for the between-study
-standard deviation ($\tau$).
-
-Abbreviation: CrI, credible interval
-
-\newpage
-
-## Appendix Figure 7: Posterior Probabilities (Risk Difference)
-
-```{r RD probabilities plot, fig.width=8, fig.height=3.5}
-pp_fun = function(data,
-                  drug){
-data |>  
-  dplyr::select(-OR) |>   
-  tidyr::pivot_longer(
-    cols = everything(),
-    names_to = "Risk_control", values_to = "RD"
-  ) |> 
-  # Extract the risk control value
-  tidytable::separate.(Risk_control,
-           sep = "_",
-           into = c(NA, "risk")
-  ) |> 
-  dplyr::mutate(risk = as.numeric(risk)) |>   
-  # Transform to percentage
-  dplyr::mutate(risk = risk*100,
-                RD = RD*100) |> 
-  dplyr::group_by(risk) |> 
-  dplyr::summarise("> 0%" = mean(RD > 0),
-                   "> 1.0%" = mean(RD > 1)) |>  
-  tidyr::pivot_longer(2:3,
-               names_to = "Risk Difference") |>  
-  dplyr::mutate(Trt = drug)
-}
-
-pp_toci = pp_fun(toci_RD, "Tocilizumab")
-pp_bari = pp_fun(bari_RD, "Baricitinib")
-pp_sari = pp_fun(sari_RD, "Sarilumab")
-
-
-dplyr::bind_rows(pp_toci, pp_bari, pp_sari) |> 
-  # Re-order
-  dplyr::mutate(Trt = factor(Trt,
-                             levels = c("Tocilizumab",
-                                        "Baricitinib",
-                                        "Sarilumab")
-                             )
-                ) |> 
-  
-  ggplot(aes(x = risk, y = 100*value,
-             group = `Risk Difference`, color = `Risk Difference`)) +
-  geom_hline(yintercept = seq(0, 100, 20), color = "gray80", size = 0.3) +
-  geom_line(size = 1.2) +
-  scale_color_manual(values = c("#516F88", "#8DBEE9")) +
-  labs(x = "\nRisk Under Control Treatment (%)",
-       y = "Posterior Probability (%)") +
-  scale_y_continuous(breaks = seq(0, 100, 20)) +
-  coord_cartesian(y = c(0, 100)) +
-  facet_wrap(~Trt, ncol = 3, scales = "free_x") +
-  ggdist::theme_tidybayes() + 
-  theme(strip.text.x = element_text(size = 11,
-                                    face="bold"),
-        strip.background = element_rect(colour="white",
-                                        fill="white"),
-        panel.spacing = unit(2, "lines"),
-        legend.title = element_text(size=12),
-        legend.text = element_text(size=12))
-  
-```
-
-Average effect posterior probabilities of benefit in the risk difference scale.
-Each line represents the posterior probability for a specific cut-point, such as 
-risk difference greater than 0% or 1%.
-across multiple mortality risks under control treatment.
-
-Underlying prior distributions are $Normal(0, 0.75^2)$ for the average effect
-($\mu$), and $\operatorname{Log-Normal}[-1.975, 0.67^2]$ for the between-study
-standard deviation ($\tau$).
-
-\newpage
-
-## Appendix Figure 8: Posterior Between-Study Standard Deviations
+## Appendix Figure 5: Posterior Between-Study Standard Deviations
 
 ```{r tau figure, eval=FALSE, include=FALSE}
 # This plot is a little more complex to code because I wanted to use different
@@ -1870,7 +1668,7 @@ Abbreviation: CrI, credible interval
 
 \newpage
 
-## Appendix Table 1:  Posterior Probabilities of Heterogeneity
+## Appendix Table 2:  Posterior Probabilities of Heterogeneity
 
 ```{r}
 both_sd |> 
@@ -1905,7 +1703,7 @@ both_sd |>
 
 \newpage
 
-## Appendix Table 2: Meta-Analyses Summary Results
+## Appendix Table 3: Meta-Analyses Summary Results
 
 ```{r credible intervals tables}
 # Table with all credible intervals
@@ -1954,7 +1752,7 @@ dplyr::left_join(mu_CrI, between_SD_CrI) |>
 
 \newpage
 
-## Appendix Figure 9: Funnel Plots
+## Appendix Figure 6: Funnel Plots
 
 ```{r funnels code, eval=FALSE, include=FALSE}
 # Warning: run this code in the Console, otherwise it will yield to an error
@@ -2032,37 +1830,23 @@ meta::metabias(arcsine_toci)
 
 \newpage
 
-\newgeometry{left=0.5in,right=0.1in,top=0.5in,bottom=0.5in, noheadfoot}
+\newgeometry{left=0.5in,right=0.5in,top=0.1in,bottom=0.1in, noheadfoot}
 
 \blandscape
 
-## Appendix Table 3: Certainty of Evidence (GRADE) 
+## Appendix Table 4: Certainty of Evidence (GRADE) 
 
 ```{r}
 grade |> 
-  dplyr::filter(Drug != "Sarilumab") |> 
   kableExtra::kbl(booktabs = F) |>
   kableExtra::kable_styling(latex_options = "striped",
                             # striped doesn't work with full_width :(
                             # https://github.com/haozhu233/kableExtra/issues/427
                             full_width = T,
-                            font_size = 10)
+                            font_size = 10) |> 
+  kableExtra::column_spec(1, width = "0.5cm")
 ```
 
-\elandscape
-
-\blandscape
-
-```{r}
-grade |> 
-  dplyr::filter(Drug == "Sarilumab") |> 
-  kableExtra::kbl(booktabs = F) |>
-  kableExtra::kable_styling(latex_options = "striped",
-                            # striped doesn't work with full_width :(
-                            # https://github.com/haozhu233/kableExtra/issues/427
-                            full_width = T,
-                            font_size = 10)
-```
 
 \elandscape
 
@@ -2070,7 +1854,7 @@ grade |>
 
 \newpage
 
-## Appendix Figure 9: Sarilumab vs. Tocilizumab Sensitivity Analysis
+## Appendix Figure 7: Sarilumab vs. Tocilizumab Sensitivity Analysis
 
 ```{r meta regressions plot functions}
 ni_margin = log(1.139606)
@@ -2198,57 +1982,58 @@ parameter_fun = function(model){
   
 ```
 
-```{r meta regressions sensitivity prior information}
+```{r  meta regressions sensitivity prior information}
 ## Means
 
-# Source: Figure S3, Appendix Appendix page 46 
-# https://www.medrxiv.org/content/10.1101/2021.06.18.21259133v2.Appendix-material
+# Figure S3 in https://doi.org/10.1101/2021.06.18.21259133;
 # version posted June 22, 2021
 reciprocal_remap_cap = 1/1.05
 mean_log_sari = log(reciprocal_remap_cap)
 
 ## SDs
 
-# Formula to extract standard error (SE)
+# Assuming a mean = log(0.952), what is the SD that yields a distribution
+# with 0.4 probability density above log(1)?
+sari_sd_optimistic_sari = (log(1) - mean_log_sari)/qnorm(1-0.4)
 
-# Transform the results into the log scale and calculate the SE
-# https://training.cochrane.org/handbook/current/chapter-06#section-6-3-2
-
-width = log(1.35) - log(0.85)
-
-sari_sd_optimistic_sari = width/(2*1.96)
-sari_sd_optimistic_toci = sari_sd_optimistic_sari
+# Assuming a mean = log(1/0.952) = -log(0.952), what is the SD that yields a
+# distribution with 0.4 probability density below log(1)?
+sari_sd_optimistic_toci = (-mean_log_sari - log(1))/qnorm(1-0.4)
 ```
 
+
 ```{r meta regressions sensitivity plot, eval=FALSE, include=FALSE}
-draws_sari_remapcap =
+draws_sari =
   dplyr::tibble(
-    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari_remapcap)$value,
-    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci_remapcap)$value
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
   ) |> 
   tidyr::pivot_longer(1:2)
 
 probs_sari = 
-  draws_sari_remapcap |> 
+  draws_sari |> 
   dplyr::group_by(name) |> 
   summarise(prNI = stringr::str_c(
     round(100*mean(value < ni_margin)), "%")
     )
 
-p1 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari_remapcap),
+pal_bari_sari = MetBrewer::met.brewer(name="VanGogh1",n=7,type="discrete")
+pal_toci = MetBrewer::met.brewer(name="OKeeffe2",n=7,type="discrete")
+
+p1 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_sari),
               color = pal_bari_sari[7],
               prior_mean = mean_log_sari,
               prior_sd = sari_sd_optimistic_sari,
               probability = probs_sari[[1,2]],
-              header = "Optimistic for Sarilumab (REMAP-CAP)") +
+              header = "Optimistic for Sarilumab") +
   ggplot2::labs(title = "Sarilumab vs. Tocilizumab\n")
 
-p2 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci_remapcap),
+p2 = plot_fun(parameter = parameter_fun(mr_sari_optimistic_toci),
               color = pal_toci[6],
               prior_mean = -mean_log_sari,
               prior_sd = sari_sd_optimistic_toci,
               probability = probs_sari[[2,2]],
-              header = "Optimistic for Tocilizumab (inverse REMAP-CAP)") +
+              header = "Optimistic for Tocilizumab") +
   theme(plot.margin = margin(20, 20, 40, 20))
 
 p1 / p2 + 
@@ -2281,31 +2066,30 @@ Post-hoc sensitivity analysis on sarilumab vs. tocilizumab meta-regression model
 (ratio of odds ratios).
 Color filled curves represent marginal posterior distributions. Color filled areas
 represent the posterior probability of noninferiority (Pr < 1.14), as the
-percentages on top of each panel. Lastly, interval bars depict the posterior median and
-95% credible intervals.
+percentages on top of each panel. Interval bars depict the posterior median and
+95% credible intervals. Solid gray lines represent underlying prior distributions.
+Each belief is labeled on top of each figure.
 
-REMAP-CAP is an RCT that directly compared sarilumab to tocilizumab and found
-results favoring sarilumab. We therefore created a prior distribution
-to incorporate these results ("Optimistic for Sarilumab (REMAP-CAP")), and 
-its inverse ("Optimistic for Tocilizumab (inverse REMAP-CAP")), as further
-explained in the Appendix Methods.
+Underlying prior distributions: “Optimistic for Sarilumab",
+$\operatorname{Normal}(-0.049, 0.193^2)$; “Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.049, 0.193^2)$
 
 
 \newpage
 
-## Appendix Table 4: Sarilumab vs. Tocilizumab Sensitivity Analysis
+## Appendix Table 5: Sarilumab vs. Tocilizumab Sensitivity Analysis
 
 ```{r meta regression sensitivity analysis table}
-draws_sari_remapcap =
+draws_sari =
   dplyr::tibble(
-    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari_remapcap)$value,
-    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci_remapcap)$value
-  ) |> 
+    "optimistic_sari" = parameter_fun(mr_sari_optimistic_sari)$value,
+    "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci)$value
+  ) |>
   tidyr::pivot_longer(1:2)
 
 # Sari
 ror_sari = 
-  draws_sari_remapcap |> 
+  draws_sari |> 
   dplyr::group_by(name) |> 
   ggdist::median_hdi(exp(value)) |> 
   dplyr::summarise(Belief = name,
@@ -2316,7 +2100,7 @@ ror_sari =
                    )
 
 proba_sari =
-  draws_sari_remapcap |> 
+  draws_sari |> 
   dplyr::group_by(name) |> 
   dplyr::summarise("Probability of Noninferiority, %" =
                      100*round(mean(value < ni_margin),2),
@@ -2328,10 +2112,10 @@ proba_sari =
 results_sari = dplyr::left_join(ror_sari, proba_sari) |> 
   dplyr::mutate(
     Belief = dplyr::case_when(
-      Belief == "optimistic_sari" ~ "Optimistic for Sarilumab  (REMAP-CAP)",
-      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab  (inverse REMAP-CAP)"),
-    Belief = factor(Belief, levels = c("Optimistic for Sarilumab  (REMAP-CAP)",
-                                       "Optimistic for Tocilizumab  (inverse REMAP-CAP)"))
+      Belief == "optimistic_sari" ~ "Optimistic for Sarilumab",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+    Belief = factor(Belief, levels = c("Optimistic for Sarilumab",
+                                       "Optimistic for Tocilizumab"))
     ) |> 
   dplyr::arrange(Belief)
 
@@ -2351,184 +2135,18 @@ results_sari |>
                             full_width = T) |> 
   kableExtra::footnote(number = c("Probability of Noninferiority, %",
                                   "Probability of Superiority, %"),
-                       general = "Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+                       general = "Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
 
 ```
+
+Underlying prior distributions: “Optimistic for Sarilumab",
+$\operatorname{Normal}(-0.049, 0.193^2)$; “Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.049, 0.193^2)$
 
 
 \newpage
 
-## Appendix Figure 10: Noninferiority Margin Sensitivity Analysis
-
-```{r probabilities of noninferiority bari toci}
-parameter_fun = function(model, prior){
-  model |>
-    tidybayes::tidy_draws() |>
-    tidyr::pivot_longer(5) |>  # Beta_1 parameter (5th column)
-    dplyr::mutate(name = prior)
-}
-
-d_bari_plot =
-  parameter_fun(mr_bari_vague, prior = "Vague") |> 
-  dplyr::bind_rows(
-    parameter_fun(mr_bari_skeptical, prior = "Skeptical"),
-    parameter_fun(mr_bari_optimistic_bari, prior = "Optimistic for Baricitinib"),
-    parameter_fun(mr_bari_optimistic_toci, prior = "Optimistic for Tocilizumab")
-  ) |> 
-  dplyr::mutate(name = factor(name,
-                              levels = c(
-                                "Vague",
-                                "Skeptical",
-                                "Optimistic for Baricitinib",
-                                "Optimistic for Tocilizumab"
-                              )))|> 
-  ggplot(aes(x = value, group = name, color = name)) +
-  geom_line(aes(y = ..y..), stat='ecdf', size = 1.2) +
-  scale_color_manual('Underlying Prior',
-                    values = c("#E0C6B6", # Vague
-                               "gray50", # Skeptical
-                               pal_bari_sari[3], # Opti for Bari
-                               pal_toci[6]) # Opti for Toci
-                    ) +
-  geom_vline(xintercept = ni_margin, linetype = 2, size = 0.5) +
-  scale_x_continuous(breaks = log(seq(1, 2, 0.15)),
-                     labels = seq(1, 2, 0.15)) +
-  scale_y_continuous(
-      breaks = seq(from = 0, to = 1, 0.2),
-      labels = c("0", "20", "40", "60", "80", "100"),
-      expand = c(0, .03)
-    ) +
-  coord_cartesian(x = log(c(1.01, 1.8))) +
-  labs(x = "Noninferiority Margin",
-       y = "Posterior Probability of Noninferiority (%)",
-       title = "Baricitinib vs. Tocilizumab\n") +
-  ggdist::theme_ggdist() +
-  theme(
-    panel.grid.major.x = element_line(color = "gray80", size = 0.3),
-    panel.grid.major.y = element_line(color = "gray80", size = 0.3),
-    legend.text = element_text(size=12),
-    legend.title = element_text(size=14),
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 14),
-    axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14),
-    plot.title = element_text(size = 13,
-                              face="bold",
-                              hjust = 0.5 # centralize
-                                 ) 
-    )
-
-```
-
-
-```{r}
-
-p3 = 
-  parameter_fun(mr_sari_vague, prior = "Vague") |> 
-  dplyr::bind_rows(
-    parameter_fun(mr_sari_skeptical, prior = "Skeptical"),
-    parameter_fun(mr_sari_optimistic_sari, prior = "Optimistic for Sarilumab"),
-    parameter_fun(mr_sari_optimistic_toci, prior = "Optimistic for Tocilizumab")
-  ) |> 
-  dplyr::mutate(name = factor(name,
-                              levels = c(
-                                "Vague",
-                                "Skeptical",
-                                "Optimistic for Sarilumab",
-                                "Optimistic for Tocilizumab"
-                              ))) |> 
-  ggplot(aes(x = value, group = name, color = name)) +
-  geom_line(aes(y = ..y..), stat='ecdf', size = 1.2) +
-  scale_color_manual(' ',
-                    values = c("#E0C6B6", # Vague
-                               "gray50", # Skeptical
-                               pal_bari_sari[7], # Opti for Sari
-                               pal_toci[6]) # Opti for Toci 
-                    ) +
-  geom_vline(xintercept = ni_margin, linetype = 2, size = 0.5) +
-  scale_x_continuous(breaks = log(seq(1, 2, 0.15)),
-                     labels = seq(1, 2, 0.15)) +
-  scale_y_continuous(
-      breaks = seq(from = 0, to = 1, 0.2),
-      labels = c("0", "20", "40", "60", "80", "100"),
-      expand = c(0, .03)
-    ) +
-  coord_cartesian(x = log(c(1.01, 1.8))) +
-  labs(x = NULL,
-       y = NULL,
-       title = "Sarilumab vs. Tocilizumab\n") +
-  ggdist::theme_ggdist() +
-  theme(
-      legend.text = element_text(size=12),
-      axis.text.x = element_text(size = 13),
-      axis.text.y = element_text(size = 13),
-      panel.grid.major.x = element_line(color = "gray80", size = 0.3),
-      panel.grid.major.y = element_line(color = "gray80", size = 0.3),
-      plot.title = element_text(size = 13,
-                                 face="bold",
-                                  hjust = 0.5 # centralize
-                                 ) 
-    )
-```
-
-```{r probabilities of noninferiority sari toci}
-p4 = 
-  parameter_fun(mr_sari_optimistic_sari_remapcap, prior = "Optimistic for Sarilumab\n(REMAP-CAP)\n") |> 
-  dplyr::bind_rows(
-    parameter_fun(mr_sari_optimistic_toci_remapcap, prior = "Optimistic for Tocilizumab\n(inverse REMAP-CAP)")
-  ) |> 
-  dplyr::mutate(name = factor(name,
-                              levels = c(
-                                "Optimistic for Sarilumab\n(REMAP-CAP)\n",
-                                "Optimistic for Tocilizumab\n(inverse REMAP-CAP)"
-                                ))) |> 
-  ggplot(aes(x = value, group = name, color = name)) +
-  geom_line(aes(y = ..y..), stat='ecdf', size = 1.2) +
-  scale_color_manual(' ',
-                    values = c(pal_bari_sari[7],
-                               pal_toci[6]) 
-                    ) +
-  geom_vline(xintercept = ni_margin, linetype = 2, size = 0.5) +
-  scale_x_continuous(breaks = log(seq(1, 2, 0.15)),
-                     labels = seq(1, 2, 0.15)) +
-  scale_y_continuous(
-      breaks = seq(from = 0, to = 1, 0.2),
-      labels = c("0", "20", "40", "60", "80", "100"),
-      expand = c(0, .03)
-    ) +
-  coord_cartesian(x = log(c(1.01, 1.8))) +
-  labs(x = "Noninferiority Margin",
-       y = NULL) +
-  ggdist::theme_ggdist() +
-  theme(
-      legend.text = element_text(size=12),
-      axis.text.x = element_text(size = 13),
-      axis.text.y = element_text(size = 13),
-      axis.title.x = element_text(size = 14),
-      panel.grid.major.x = element_line(color = "gray80", size = 0.3),
-      panel.grid.major.y = element_line(color = "gray80", size = 0.3)
-                                 ) 
-```
-
-```{r probabilities of noninferiority figure, fig.width=14, fig.height=6}
-
-d_bari_plot + 
-  (p3 / p4) + patchwork::plot_annotation(tag_levels = "A")
-```
-
-Posterior probabilities (Y-axis) across multiple noninferiority margins (X-axis)
-of meta-regressions models. Each curve represents a different analysis based on
-the underlying prior distribution. The dashed black line represents the main
-noninferiority margin (1.14 ratio of odds ratios). Panel A depicts results
-regarding baricitinib vs.  tocilizumab analyses. There is a zoomed-in panel to
-better represent differences shown between 1.0 and 1.28 margins on the X-axis,
-and between 90 and 100% on the Y-axis. Panel B depicts results regarding
-sarilumab vs. tocilizumab main analyses. Panel C depicts results regarding
-sarilumab vs. tocilizumab post-hoc sensitivity analyses.
-
-\newpage
-
-## Appendix Table 5: Baricitinib vs. Tocilizumab Sensitivity Analysis
+## Appendix Table 6: Baricitinib vs. Tocilizumab Sensitivity Analysis
 
 
 ```{r}
@@ -2550,8 +2168,19 @@ pre_table_sens |>
                             full_width = T) |> 
   kableExtra::footnote(number = c("Probability of Noninferiority, %",
                                   "Probability of Superiority, %"),
-                       general = "Abbreviations: ROR, ratio of odds ratios; CrI, credibility interval")
+                       general = "Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
 
 
 ```
+
+Underlying prior distributions: 
+"Skeptical",
+$\operatorname{Normal}(0, 0.354^2)$;
+“Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.105, 0.416^2)$;
+“Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.105, 0.416^2)$;
+"Vague", 
+$\operatorname{Normal}(0, 4^2)$;
+
 

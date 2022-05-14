@@ -12,6 +12,9 @@ pacman::p_load(here,
                brms,
                tidybayes)
 
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
+
 # Load data
 d_logOR = readRDS(
   here::here("output", "data", "effect_sizes.Rds")
@@ -109,8 +112,8 @@ forest_fun_toci = function(){
   
   metafor::forest(d_toci$yi, d_toci$vi,
                   cex=0.75, # text size
-                  ylim=c(0, 21.5), # Y length
-                  rows=c(3:17),
+                  ylim=c(0, 22.5), # Y length
+                  rows=c(3:18),
                   alim=log(c(0.25, 4)),
                   xlim=c(-8, 3.5), 
                   at=log(c(0.25, 0.5, 1, 2, 4)),
@@ -165,27 +168,27 @@ metafor::addpoly(x = toci_pred$y,
 # Headers
 
 text(mean(c(-4,-2.5)) - 0.1,
-     21.5,
+     22.5,
      "No of events / total",
      font=2,
      cex = 0.7)
 
 # Horizontal line
 segments(-4 - 0.6,
-         21,
+         22,
          -2.5 + 0.35,
-         21)
+         22)
 
-text(c(-4,-2.5), 20.5, c("Experimental","Control"), font = 2, cex = 0.7)
+text(c(-4,-2.5), 21.5, c("Experimental","Control"), font = 2, cex = 0.7)
 
 text(c(-0.6,0.6), # X axis
-     18.5, # Y axis
+     19.5, # Y axis
      cex = 0.7, # size
      c("Favors\nExperimental","Favors\nControl"),
      pos=c(2,4), # Right + Left aligned
      offset=-1)
 
-text(-7.1,18.5,
+text(-7.1,19.5,
      "Tocilizumab",
      font=4, # bold
      cex = 0.9)

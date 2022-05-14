@@ -10,14 +10,24 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align='center')
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, results='hide'}
 # Ensures the package "pacman" is installed
 if (!require("pacman")) install.packages("pacman")
 
 pacman::p_load(here,
                gt,
+               dplyr,
                cowplot,
-               magick)
+               magick,
+               pdftools)
+
+# Ensure that packages are installed according to versions in renv's lockfile
+renv::restore()
+
+# Load table 1 data
+pre_table1 = rio::import(
+  here::here("data", "table1_data.xlsx")
+)
 
 # Load table 2 data
 pre_table2 = readRDS(
@@ -25,12 +35,94 @@ pre_table2 = readRDS(
 )
 ```
 
-# Table 1 (pending)
+# Figure 1
+
+```{r out.width='0.88\\linewidth'}
+knitr::include_graphics(here::here('PRISMA_2020_flow_diagram_correct.png'))
+```
+
+PRISMA 2020 Flow Diagram
+
+# Table 1
 
 Overall characteristics of included RCTs
 
+```{r}
+pre_table1 |>  
+  # Re-order columns
+  dplyr::select(1:8,
+                age_control, male_control, time_symptom_control, pcr_control,
+                simple_oxygen_control, niv_control, imv_control,
+                age_exp, male_exp, time_symptom_exp, pcr_exp,
+                simple_oxygen_exp, niv_exp, imv_exp
+                ) |> 
+  dplyr::rename("Study" = study_name,
+                "Article Type" = article_type,
+                "Dose" = dose,
+                "Drug Regimen" = regimen,
+                "Control Type" = control_type,
+                "Follow-up Length" = mortality_followup,
+                "Number of Sites" = amount_sites,
+              
+                
+                "Age" = age_control,
+                "Male"= male_control,
+                "Time since Symptom Onset" = time_symptom_control,
+                "Lab Confirmed COVID-19" = pcr_control,
+                "Simple Oxygen Only" = simple_oxygen_control,
+                "Noninvasive Ventilation" = niv_control,
+                "Invasive Mechanical Ventilation" = imv_control,
+                
+                "Age " = age_exp,
+                "Male "= male_exp,
+                "Time since Symptom Onset " = time_symptom_exp,
+                "Lab Confirmed COVID-19 " = pcr_exp,
+                "Simple Oxygen Only " = simple_oxygen_exp,
+                "Noninvasive Ventilation " = niv_exp,
+                "Invasive Mechanical Ventilation " = imv_exp
+                ) |> 
+  dplyr::group_by(intervention) |> 
+  gt::gt() |> 
+  gt::tab_spanner(label = "Control Treatment",
+                  columns = 8:14) |> 
+  gt::tab_spanner(label = "Experimental Treatment",
+                  columns = 15:dplyr::last_col()) |> 
+  gt::tab_footnote(
+    footnote = "Days",
+    locations = gt::cells_column_labels(
+      columns = "Follow-up Length")
+    ) |> 
+  gt::tab_footnote(
+    footnote = "Median (IQR) or Mean (SD)",
+    locations = gt::cells_column_labels(
+      columns = c("Age", "Age ",
+                  "Time since Symptom Onset", "Time since Symptom Onset ",
+                  )
+      )
+    ) |> 
+  gt::tab_footnote(
+    footnote = "%",
+    locations = gt::cells_column_labels(
+      columns = c("Male", "Male ",
+                  "Lab Confirmed COVID-19", "Lab Confirmed COVID-19 ",
+                  "Simple Oxygen Only", "Simple Oxygen Only ",
+                  "Noninvasive Ventilation", "Noninvasive Ventilation ",
+                  "Invasive Mechanical Ventilation", "Invasive Mechanical Ventilation "
+                  )
+      )
+    ) |> 
+  tab_source_note(
+    source_note =
+      md("Patient characteristics specific to those co-treated with corticosteroids were not systematically reported in these RCTs. Thus, this table includes characteristics to all participants randomized in these studies, and not necessarily to only patients treated with corticosteroids. "
+  )
+  ) #|> 
+  #gtsave("table_1.html",
+  #       path =  here("output", "tables"))
+```
 
-# Figure 1
+
+
+# Figure 2
 
 ```{r }
 knitr::include_graphics(here::here("output", "figures",
@@ -41,7 +133,13 @@ knitr::include_graphics(here::here("output", "figures",
 
 Forest plots of Bayesian random-effect meta-analyses of tocilizumab, baricitinib, or sarilumab versus control (three separate models). Black diamonds represent median and 95% credible intervals of posterior overall results ($\mu$). Purple diamonds represent the 95% prediction intervals of posterior predictive distributions. The median and 95% credible intervals of the between-study standard deviation parameter ($\tau$) are displayed on the left bottom corner of each forest plot.  Abbreviations: RE, random-effect; CrI, credible interval; PI, prediction interval.
 
-# Figure 2
+Underlying prior distributions: 
+average effect parameter,
+$\operatorname{Normal}(0, 0.75^2)$;
+between-study standard deviation parameter,
+$\operatorname{Log-Normal}(-1.975, 0.67^2)$
+
+# Figure 3
 
 ```{r out.width="80%", out.height="80%"}
 # https://stackoverflow.com/questions/25415365/insert-side-by-side-png-images-using-knitr
@@ -76,6 +174,26 @@ noninferiority (Pr < 1.14), as the percentages on top of each figure.
 Interval bars depict the posterior median and 95% highest density intervals.
 Solid gray lines represent underlying prior distributions. Each belief is
 labeled on top of each figure.
+
+Underlying prior distributions for Baricitinib vs. Tocilizuamb results: 
+"Skeptical",
+$\operatorname{Normal}(0, 0.354^2)$;
+“Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.049, 0.416^2)$;
+“Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.049, 0.416^2)$;
+"Vague", 
+$\operatorname{Normal}(0, 4^2)$;
+
+Underlying prior distributions for Sarilumab vs. Tocilizuamb results: 
+"Skeptical",
+$\operatorname{Normal}(0, 0.354^2)$;
+“Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.105, 0.118^2)$;
+“Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.105, 0.118^2)$;
+"Vague", 
+$\operatorname{Normal}(0, 4^2)$;
 
 # Table 2
 
@@ -116,4 +234,23 @@ pre_table2 |>
   )
 ```
 
+Underlying prior distributions for Baricitinib vs. Tocilizuamb results: 
+"Skeptical",
+$\operatorname{Normal}(0, 0.354^2)$;
+“Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.049, 0.416^2)$;
+“Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.049, 0.416^2)$;
+"Vague", 
+$\operatorname{Normal}(0, 4^2)$;
+
+Underlying prior distributions for Sarilumab vs. Tocilizuamb results: 
+"Skeptical",
+$\operatorname{Normal}(0, 0.354^2)$;
+“Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.105, 0.118^2)$;
+“Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.105, 0.118^2)$;
+"Vague", 
+$\operatorname{Normal}(0, 4^2)$;
 

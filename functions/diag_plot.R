@@ -1,6 +1,11 @@
 # https://benyandrew.netlify.app/blog/bayesian_rct/#
 
-pacman::p_load(cowplot, ggplot2, bayesplot)
+# Ensures the package "pacman" is installed
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load("cowplot", "ggplot2", "bayesplot")
+
+renv::restore()
 
 base_theme <-
   theme_classic()
