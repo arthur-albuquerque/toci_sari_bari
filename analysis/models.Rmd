@@ -253,7 +253,10 @@ compared to control.
 
 ## Tocilizumab vs. Sarilumab
 
-Here are the priors for this comparison:
+Here are the priors for this comparison. Of note, the "Optimistic for Sarilumab"
+and "Optimistic for Tocilizumab" models were the 
+ones originally preregistered as main models. Yet they are presented as 
+supplementary in the peer-reviewed article of this project. 
 
 $$
 \begin{align*}
@@ -438,7 +441,10 @@ m_sari_vague =
 
 ## Tocilizumab vs. Baricitinib
 
-Here are the priors for this comparison:
+Here are the priors for this comparison. Of note, the "Optimistic for Baricitinib"
+and "Optimistic for Tocilizumab" models were the 
+ones originally preregistered as main models. Yet they are presented as 
+supplementary in the peer-reviewed article of this project. 
 
 $$
 \begin{align*}
@@ -597,6 +603,39 @@ m_bari_vague =
 
 ### Sensitivity analysis with all patients in RECOVERY Bari
 
+Here we will use the post-hoc priors based on Karampitsakos et al.'s results
+for the "Optimistic for Baricitinib" and "Optimistic for Tocilizumab" models.
+
+```{r}
+# Data provided by Karampitsakos et al. through email 
+
+# Calculate crude log odds ratio
+
+bari_toci_data = 
+  metafor::escalc(
+  measure = "OR", # log odds ratio
+  
+  # Baricitinib
+  ai = 40,
+  n1i = 125,
+  
+  # Tocilizumab
+  ci = 50,
+  n2i = 126
+) %>%
+  as_tibble() %>% 
+  # Calculate standard error
+  dplyr::mutate(sei = sqrt(vi))
+
+## Mean
+mean_log_bari = bari_toci_data$yi[1]
+
+## SDs
+bari_sd_optimistic_bari = bari_toci_data$sei[1]
+bari_sd_optimistic_toci = bari_sd_optimistic_bari
+```
+
+
 ```{r}
 
 ## Skeptical model
@@ -631,12 +670,12 @@ m_bari_skeptical_sens =
 ## "Optimistic for Baricitinib" model
 
 # mean_log_bari
-# -0.1053605
+# -0.3350615
 
 # bari_sd_optimistic_bari
-# 0.4158742
+# 0.2644288
 
-m_bari_optimistic_bari_sens =
+m_bari_optimistic_bari_direct_sens =
   brms::brm(
     
   data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
@@ -644,7 +683,7 @@ m_bari_optimistic_bari_sens =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(-0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
+    brms::prior(normal(-0.3350615, 0.2644288), class = "b", coef = "treatmentbaricitinib"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),
@@ -655,19 +694,19 @@ m_bari_optimistic_bari_sens =
   cores = parallel::detectCores(),
   chains = 4,
   
-  file = here::here("output", "fits", "mr_bari_optimistic_bari_sens.Rds"),
+  file = here::here("output", "fits", "mr_bari_optimistic_bari_direct_sens.Rds"),
   file_refit = "on_change"
 )
 
 ## "Optimistic for Tocilizumab" model
 
 # -mean_log_bari
-# 0.1053605
+# 0.3350615
 
 # bari_sd_optimistic_toci
-# 0.4158742
+# 0.2644288
 
-m_bari_optimistic_toci_sens =
+m_bari_optimistic_toci_direct_sens =
   brms::brm(
     
   data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari (No Toci)"),
@@ -675,7 +714,7 @@ m_bari_optimistic_toci_sens =
   formula = mf,
   
   prior = priors +
-    brms::prior(normal(0.1053605, 0.4158742), class = "b", coef = "treatmentbaricitinib"),
+    brms::prior(normal(0.3350615, 0.2644288), class = "b", coef = "treatmentbaricitinib"),
   sample_prior = TRUE,
   
   control = list(adapt_delta = .96),
@@ -686,7 +725,7 @@ m_bari_optimistic_toci_sens =
   cores = parallel::detectCores(),
   chains = 4,
   
-  file = here::here("output", "fits", "mr_bari_optimistic_toci_sens.Rds"),
+  file = here::here("output", "fits", "mr_bari_optimistic_toci_direct_sens.Rds"),
   file_refit = "on_change"
 )
 
@@ -763,7 +802,7 @@ brms::pp_check(ma_sari,
                ndraws = 50)
 ```
 
-Baricitinib models
+Baricitinib (sensitivity) models
 
 ```{r}
 diag_plot(model = ma_bari,
@@ -944,18 +983,18 @@ brms::pp_check(m_bari_optimistic_bari,
 ```
 
 ```{r}
-diag_plot(model = m_bari_optimistic_bari_sens,
+diag_plot(model = m_bari_optimistic_bari_direct_sens,
           pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
           ncol_trace = 4)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-brms::pp_check(m_bari_optimistic_bari_sens,
+brms::pp_check(m_bari_optimistic_bari_direct_sens,
                type = "dens_overlay_grouped",
                group = "treatment",
                ndraws = 50) + coord_cartesian(y = c(0, 4))
 
-brms::pp_check(m_bari_optimistic_bari_sens,
+brms::pp_check(m_bari_optimistic_bari_direct_sens,
                type = "ecdf_overlay_grouped",
                group = "treatment",
                ndraws = 50)
@@ -984,18 +1023,18 @@ brms::pp_check(m_bari_optimistic_toci,
 "Optimistic for Tocilizumab" model
 
 ```{r}
-diag_plot(model = m_bari_optimistic_toci_sens,
+diag_plot(model = m_bari_optimistic_toci_direct_sens,
           pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
           ncol_trace = 4)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-brms::pp_check(m_bari_optimistic_toci_sens,
+brms::pp_check(m_bari_optimistic_toci_direct_sens,
                type = "dens_overlay_grouped",
                group = "treatment",
                ndraws = 50) + coord_cartesian(y = c(0, 4))
 
-brms::pp_check(m_bari_optimistic_toci_sens,
+brms::pp_check(m_bari_optimistic_toci_direct_sens,
                type = "ecdf_overlay_grouped",
                group = "treatment",
                ndraws = 50)

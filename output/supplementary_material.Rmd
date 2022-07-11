@@ -70,6 +70,7 @@ pacman::p_load(here,
                tidybayes,
                ggnewscale,
                patchwork,
+               metafor,
                meta,
                gt,
                kableExtra,
@@ -110,23 +111,38 @@ ma_bari_sens = readRDS(here::here("output", "fits", "ma_bari_sens.Rds"))
 
 mr_bari_skeptical_sens = readRDS(here::here("output", "fits",
                                        "mr_bari_skeptical_sens.Rds"))
-mr_bari_optimistic_bari_sens = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_bari_sens.Rds"))
-mr_bari_optimistic_toci_sens = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_toci_sens.Rds"))
+mr_bari_optimistic_bari_direct = readRDS(
+  here::here("output", "fits", "sensitivity_analyses",
+             "mr_bari_optimistic_bari_direct.Rds"))
+mr_bari_optimistic_toci_direct_direct_sens = readRDS(
+  here::here("output", "fits", "sensitivity_analyses",
+             "mr_bari_optimistic_toci_direct.Rds"))
 mr_bari_vague_sens = readRDS(here::here("output", "fits",
                                    "mr_bari_vague_sens.Rds"))
 
-# Sensitivity analyses: sarilumab meta-regressions
+# Sensitivity analyses:
+# Baricitinib meta-regressions
+mr_bari_optimistic_bari = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_bari.Rds"))
+mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_toci.Rds"))
+
+# Sarilumab meta-regressions
 mr_sari_optimistic_sari = readRDS(here::here("output", "fits",
                                              "mr_sari_optimistic_sari.Rds"))
 mr_sari_optimistic_toci = readRDS(here::here("output", "fits",
                                              "mr_sari_optimistic_toci.Rds"))
 
-# Load meta regression table data
-pre_table_sens = readRDS(
-  here::here("output", "tables", "supplementary", "table_sens_data.Rds")
-)
+# Sensitivity analysis (including all patients in RECOVERY Bari)
+
+mr_bari_skeptical_sens = readRDS(here::here("output", "fits",
+                                       "mr_bari_skeptical_sens.Rds"))
+mr_bari_optimistic_bari_direct_sens = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_bari_direct_sens.Rds"))
+mr_bari_optimistic_toci_direct_sens = readRDS(here::here("output", "fits",
+                                             "mr_bari_optimistic_toci_direct_sens.Rds"))
+mr_bari_vague_sens = readRDS(here::here("output", "fits",
+                                   "mr_bari_vague_sens.Rds"))
 
 ```
 
@@ -325,7 +341,7 @@ Regarding the between-study standard deviation parameter ($\tau$), we used an in
 
 Although the definition of small or large between-study heterogeneity is
 arbitrary, previous work suggests cutoff values (“reasonable” heterogeneity
-between 0.1 and 0.5, and “fairly high” between 0.5 and 1.0.[@spiegelhalter2004] We added a category for low heterogeneity (between 0 and 0.1):
+between 0.1 and 0.5, and “fairly high” between 0.5 and 1.0).[@spiegelhalter2004] We added a category for low heterogeneity (between 0 and 0.1):
 
 \begin{align*}
 \tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)
@@ -504,13 +520,28 @@ noninferior to tocilizumab. A sensitive approach to answer this question is to
 separately meta-analyze direct comparisons between tocilizumab vs. baricitinib
 and tocilizumab vs. sarilumab. However, a preliminary search by our research
 group showed a limited number of studies that report such
-comparisons.[@zotero-3144] Thus, we decided to only estimate the
-noninferiority probability of sarilumab and baricitinib vs. tocilizumab through
-indirect (across-trials) comparisons. Because of the fragility of such
+comparisons.[@zotero-3144;@karampitsakos2022] Thus, we decided to estimate
+noninferiority probabilities of sarilumab and baricitinib vs. tocilizumab mostly
+through indirect (across-trials) comparisons. Because of the fragility of such
 comparisons, it is of great interest to test the robustness of these estimates
 with multiple prior distributions.
 
-Bayesian network meta-analyses are historically used to estimate direct, indirect, and mixed-effects when more than two treatment comparisons are available.[@dias2018] However, this approach does not allow one to assign prior distributions to specific comparisons within the network, such as an indirect effect. To overcome this limitation, we fitted Bayesian random-effect meta-regression models to estimate the indirect differences mentioned above (two separate sets of models: tocilizumab vs. baricitinib; tocilizumab vs. sarilumab).[@pitchforth2012] These models are identical to meta-regressions with a dichotomous covariate used to evaluate subgroup differences.[@thompson2002] This approach allows one to apply a plethora of prior distributions specifically to the indirect comparison between treatments. 
+Bayesian network meta-analyses are historically used to estimate direct,
+indirect, and mixed-effects when more than two treatment comparisons are
+available.[@dias2018] However, this approach does not allow one to assign prior
+distributions to specific comparisons within the network, such as an indirect
+effect. Further, the primary reason for not performing a Bayesian NMA is the
+lack of direct evidence between several of the arms forcing a reliance on the
+indirect evidence with no means of assessing its compatible with direct evidence.
+We thus sought to perform multiple sensitivity analyses with different priors
+to account for differing beliefs of non-inferiority. To overcome these
+limitations, we fitted Bayesian random-effect meta-regression models to estimate
+the indirect differences mentioned above (two separate sets of models: tocilizumab
+vs. baricitinib; tocilizumab vs. sarilumab).[@pitchforth2012] These models are
+identical to meta-regressions with a dichotomous covariate used to evaluate
+subgroup differences.[@thompson2002] This approach allows one to apply a
+plethora of prior distributions specifically to the indirect comparison
+between treatments. 
 
 Both baricitinib and sarilumab models are identical, and are described as:[@pitchforth2012]
 
@@ -583,13 +614,18 @@ where ROR is the ratio of odds ratios, i.e. the interaction parameter exponentia
 \frac {\downarrow OR_{comparator}}{\uparrow OR_{tocilizumab}} \rightarrow ROR < 1
 \end{align*}
 
-We separately applied $4$ normally distributed prior distributions for
-$\beta_{1, T}$ in each model (sarilumab and baricitinib's models), which can
-be described based on the “prior belief" and “belief strength". While the former
-reflects the distribution's mean, the latter reflects the distribution's standard
-deviation.
+We had originally planned to only apply $4$ prior
+distributions for $\beta_{1, T}$ in each model (sarilumab and baricitinib's
+models). However, as further explained later in the 
+**"Post-hoc Analyses"** Section, we decided to incorporate new direct evidence
+between baricitinib/sarilumab vs. tocilizumab into our analyses. We will now 
+describe the $4$ originally prespecified priors. However, we note that, from
+these, only results from *"Skeptical"* and *"Vague"* models are presented in the
+main meta-regression figure/table in this manuscript. Other are still shown, but
+as supplementary material.
 
-In the model comparing **sarilumab** to tocilizumab, the beliefs are: 
+In the model comparing **sarilumab** to tocilizumab, the originally prespecified
+beliefs are: 
 
 * “Skeptical", which expects no difference between sarilumab and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$. 
 Results from this prior take part in the main meta-regression figure in
@@ -855,7 +891,7 @@ p_skeptical / p_optimistic_sari / p_optimistic_toci +
   plot_annotation(tag_levels = "A")
 ```
 
-Prior distributions for $beta\_{1, Sari}$ (ratio of odds ratios) in models
+Prior distributions for $\beta_{1, Sari}$ (ratio of odds ratios) in models
 comparing sarilumab to tocilizumab. Panel A: 'Skeptical' prior. The Normal($0$,
 $0.354^2$) distribution approximately concentrates $95$% of probability density
 between $0.5$ and $2.0$ in the linear scale ($-0.69$ and $0.69$ in the log
@@ -867,20 +903,19 @@ probability density below $1$.
 
 <br><br>
 
-\newpage
-
-In the model comparing **baricitinib** to tocilizumab, the beliefs are: 
+In the model comparing **baricitinib** to tocilizumab, the originally 
+prespecified beliefs are: 
 
 * “Skeptical", which expects no difference between baricitinib and tocilizumab studies (mean centered at $1$) with $95\%$ probability between $0.5$ and $2$ (linear scale, ratio of odds ratios). These values represent a weak belief strength,[@zampieri2021] based on the little information currently available on this topic. $\operatorname{Normal}(0, 0.354^2)$.
 Results from this prior take part in the main meta-regression figure in
 this article. 
 
-* “Optimistic for Baricitinib", which expects a greater mortality reduction due to baricitinib use in comparison to tocilizumab. The mean is centered at $0.9$ (linear scale, ratio of odds ratios), which was arbitrarily chosen based on clinical judgment that a 10\% relative difference is clinically important. Because there was no information previously available, we considered that there is 40\% of probability that the ratio of odds ratios is greater than 1, representing a weak belief strength.[@zampieri2021] $\operatorname{Normal}(-0.105, 0.416^2)$. Results from this prior take part in
-the main meta-regression figure in
+* “Optimistic for Baricitinib", which expects a greater mortality reduction due to baricitinib use in comparison to tocilizumab. The mean is centered at $0.9$ (linear scale, ratio of odds ratios), which was arbitrarily chosen based on clinical judgment that a 10\% relative difference is clinically important. Because there was no information previously available, we considered that there is 40\% of probability that the ratio of odds ratios is greater than 1, representing a weak belief strength.[@zampieri2021] $\operatorname{Normal}(-0.105, 0.416^2)$.
+Results from this prior take part in the Appendix meta-regression figure in
 this article. 
 
 * “Optimistic for Tocilizumab", which expects a greater mortality reduction due to tocilizumab use in comparison to sarilumab. The mean is centered at $1.11$, the reciprocal of $0.9$. Similarly, this prior belief will also have a weak strength, represented by 40\% of probability that the ratio of odds ratios is lower than $1$.[@zampieri2021] $\operatorname{Normal}(0.105, 0.416^2)$.
-Results from this prior take part in the main meta-regression figure in
+Results from this prior take part in the Appendix meta-regression figure in
 this article. 
 
 * “Vague", which represents no prior belief with no strength. $\operatorname{Normal}(0, 4^2)$.
@@ -958,7 +993,7 @@ p_skeptical / p_optimistic_bari / p_optimistic_toci +
   plot_annotation(tag_levels = "A")
 ```
 
-Prior distributions for $beta\_{1, Bari}$ (ratio of odds ratios) in models
+Prior distributions for $\beta_{1, Bari}$ (ratio of odds ratios) in models
 comparing baricitinib to tocilizumab. Panel A: 'Skeptical' prior. The
 Normal($0$, $0.354^2$) distribution approximately concentrates $95$% of
 probability density between $0.5$ and $2.0$ in the linear scale ($-0.69$ and
@@ -970,7 +1005,8 @@ $40$% of probability density below $1$.
 
 \newpage
 
-In summary, both sarilumab and baricitinib models can be fully described as:
+In summary, both originally prespecified sarilumab and baricitinib models can
+be fully described as:
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2)\\
@@ -1002,18 +1038,87 @@ and the priors in baricitinib's models are:
 
 where all parameters are in the log scale.
 
-One could argue that baricitinib's priors are stronger than sarilumab's given differences on the mean values ($|0.105| > |0.049|$). We note that, although the mean values are different because we only found prior evidence for the sarilumab vs. tocilizumab comparison, these prior discrepancies are likely to be of little relevance. As depicted in the figures above, the baricitinib's priors have a greater mean but lower density than sarilumab's priors. Therefore, we do not expect these priors' impact on each marginal posterior distribution to be relevantly different.
+One could argue that baricitinib's priors are stronger than sarilumab's given
+differences on the mean values ($|0.105| > |0.049|$). We note that, although 
+the mean values are different because we only originally found prior evidence 
+for the sarilumab vs. tocilizumab comparison, these prior discrepancies are
+likely to be of little relevance. As depicted in the figures above, the
+baricitinib's priors have a greater mean but lower density than sarilumab's
+priors. Therefore, we do not expect these priors' impact on each marginal
+posterior distribution to be relevantly different.
 
 \newpage
 
-### Post-hoc Analysis
+### Post-hoc Analyses
 
-Regarding the sarilumab vs. tocilizumab meta-regression model, we also performed
+Regarding the **baricitinib vs. tocilizumab** meta-regression model, we also performed
+a post-hoc analysis with a different set of priors. 
+
+We fitted the exact same model, but with different “Optimistic for Baricitinib"
+and “Optimistic for Tocilizumab" priors (hereafter, “Optimistic for Baricitinib
+[Karampitsakos et al.]" and “Optimistic for Tocilizumab [inverse 
+Karampitsakos et al.])":
+
+\begin{align*}
+y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
+\theta_i & \sim Normal(\mu, \tau^2)\\
+\mu &= \beta_0 + \beta_{1, Bari} x_i\\
+\\
+\beta_0 & \sim \operatorname{Normal}(0, 0.75^2) \tag{Priors}\\
+\tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)\\
+\beta_{1, Bari[Baricitinib]} & \sim \operatorname{Normal}(-0.335, 0.264^2)\\
+\beta_{1, Bari[Tocilizumab]} & \sim \operatorname{Normal}(0.335, 0.264^2)\\
+\end{align*}
+
+These priors were constructed to reflect the exact same strength of the single
+study that directly compared baricitinib to tocilizumab.[@karampitsakos2022] All
+patients were treated with corticosteroids. The authors provided the following
+28-day mortality data by email request:
+
+- 50 patients in the tocilizumab arm died (out of 126 patients); 40 patients in
+the baricitinib arm died (out of 125). 
+
+```{r}
+# Data provided by Karampitsakos et al. through email 
+
+# Calculate crude log odds ratio
+
+bari_toci_data = 
+  metafor::escalc(
+  measure = "OR", # log odds ratio
+  
+  # Baricitinib
+  ai = 40,
+  n1i = 125,
+  
+  # Tocilizumab
+  ci = 50,
+  n2i = 126
+) %>%
+  as_tibble() %>% 
+  # Calculate standard error
+  dplyr::mutate(sei = sqrt(vi))
+
+## Mean
+mean_log_bari = bari_toci_data$yi[1]
+
+## SDs
+bari_sd_optimistic_bari = bari_toci_data$sei[1]
+```
+
+We thus estimated a crude odds ratio of mean $=$ `r round(mean_log_bari,3)` and
+standard error $=$ `r round(bari_sd_optimistic_bari, 3)` with the R package
+*metafor*. **Results from these priors take part in the main meta-regression figure in this article.**
+
+
+\newpage
+
+Regarding the **sarilumab vs. tocilizumab** meta-regression model, we also performed
 a post-hoc analysis with a different set of priors. 
 
 We fitted the exact same model, but with different “Optimistic for Sarilumab"
 and “Optimistic for Tocilizumab" priors (hereafter, “Optimistic for Sarilumab
-(REMAP-CAP)" and “Optimistic for Tocilizumab (inverse REMAP-CAP)":
+[REMAP-CAP]" and “Optimistic for Tocilizumab [inverse REMAP-CAP])":
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
@@ -1034,8 +1139,7 @@ $$\sigma = \frac{\ln(\operatorname{UCL}) - \ln(\operatorname{LCL})}{3.92}$$
 
 where $UCL$ is $1.35$, and $LCL$ is $0.85$, as depicted in the Figure S3 of the RCT cited above (REMAP-CAP). In comparison to the 40\% probability density above/below $1.0$ yielded by the main priors in the section before, these sensitivity priors yield $34\%$, highlighting its greater strength.
 
-Results from these priors take part in the main meta-regression figure in
-this article. 
+**Results from these priors take part in the main meta-regression figure in this article.**
 
 \newpage
 
@@ -1065,7 +1169,7 @@ where $\gamma$ is the estimated noninferiority margin, $\theta$ is the tocilizum
 
 # Appendix Results
 
-\newgeometry{left=0.5in,right=0.5in,top=0.1in,bottom=0.1in, noheadfoot}
+\newgeometry{left=0.5in,right=0.1in,top=0.1in,bottom=0.1in, noheadfoot}
 
 \blandscape
 
@@ -1233,7 +1337,7 @@ Tocilizumab studies; Panel B: Baricitinib; Panel C: Sarilumab.
 \newpage
 
 
-## Appendix Figure 3: Posterior Probabilities (Odds Ratio)
+## Appendix Figure 3: Meta-Analyses: Posterior Probabilities
 
 ```{r sensitivity models}
 # Models with less informative priors on tau (Half-Normal[0.5])
@@ -1703,7 +1807,7 @@ both_sd |>
 
 \newpage
 
-## Appendix Table 3: Meta-Analyses Summary Results
+## Appendix Table 3: Meta-Analyses: Summary Results
 
 ```{r credible intervals tables}
 # Table with all credible intervals
@@ -1854,7 +1958,7 @@ grade |>
 
 \newpage
 
-## Appendix Figure 7: Sarilumab vs. Tocilizumab Sensitivity Analysis
+## Appendix Figure 7: Baricitinib vs. Tocilizumab Meta-Regression Sensitivity Analysis
 
 ```{r meta regressions plot functions}
 ni_margin = log(1.139606)
@@ -1962,15 +2066,15 @@ output = ggplot() +
 return(output)
 }
 
-labs_sari = c("Favors\nSarilumab", "Favors\nTocilizumab")
+labs_bari = c("Favors\nBaricitinib", "Favors\nTocilizumab")
 
 
-df_sari = data.frame(text = labs_sari,
+df_bari = data.frame(text = labs_bari,
                      x = c(1,19),
                      y = c(0.2, 0.2),
                      hjust = c(0, 1))
 
-arrows_sari = arrow_fun(arrows_sari, df_sari)
+arrows_bari = arrow_fun(arrows_bari, df_bari)
 
 # Function to extract posterior draws more easily
 
@@ -1981,6 +2085,171 @@ parameter_fun = function(model){
 }
   
 ```
+
+```{r meta regressions sensitivity bari plot, eval=FALSE, include=FALSE}
+draws_bari =
+  dplyr::tibble(
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:2)
+
+probs_bari = 
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  summarise(prNI = stringr::str_c(
+    round(100*mean(value < ni_margin)), "%")
+    )
+
+pal_bari_sari = MetBrewer::met.brewer(name="VanGogh1",n=7,type="discrete")
+pal_toci = MetBrewer::met.brewer(name="OKeeffe2",n=7,type="discrete")
+
+# Originally prespecified priors: 
+
+## Means
+mean_log_bari = log(0.9)
+
+# Assuming a mean = log(0.9), what is the SD that yields a distribution
+# with 0.4 probability density above log(1)?
+bari_sd_optimistic_bari = (log(1) - mean_log_bari)/qnorm(1-0.4)
+
+# Assuming a mean = log(1/0.9) = -log(0.9), what is the SD that yields a
+# distribution with 0.4 probability density below log(1)?
+bari_sd_optimistic_toci = (-mean_log_bari - log(1))/qnorm(1-0.4)
+
+p1 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_bari),
+              color = pal_bari_sari[3],
+              prior_mean = mean_log_bari,
+              prior_sd = bari_sd_optimistic_bari,
+              probability = probs_bari[[1,2]],
+              header = "Optimistic for Baricitinib") +
+  ggplot2::labs(title = "Baricitinib vs. Tocilizumab\n")
+
+p2 = plot_fun(parameter = parameter_fun(mr_bari_optimistic_toci),
+              color = pal_toci[6],
+              prior_mean = -mean_log_bari,
+              prior_sd = bari_sd_optimistic_toci,
+              probability = probs_bari[[2,2]],
+              header = "Optimistic for Tocilizumab") +
+  theme(plot.margin = margin(20, 20, 40, 20))
+
+p1 / p2 + 
+  patchwork::inset_element(arrows_bari,
+                           ignore_tag = TRUE,
+                           align_to = "full",
+                           left = unit(2.5, 'cm'),
+                           bottom = unit(0.2, 'cm'),
+                           right = unit(15.7, 'cm'),
+                           top = unit(2.5, 'cm'))
+  
+ggsave(width = 7,
+       height = 6,
+       device = cairo_pdf,
+       here::here("output", "figures", "supplementary", # File path
+                  "baricitinib_meta_regressions_sensitivity.pdf"))
+```
+
+```{r meta regressions sensitivity plot bari display}
+cowplot::ggdraw() + 
+  # https://stackoverflow.com/questions/50026862/the-draw-image-function-from-cowplot-results-in-blurred-pdfs
+  cowplot::draw_image(
+    magick::image_read_pdf(
+    here::here("output", "figures", "supplementary",
+               "baricitinib_meta_regressions_sensitivity.pdf"),
+    density = 600))
+```
+
+Post-hoc sensitivity analysis on baricitinib vs. tocilizumab meta-regression model
+(ratio of odds ratios) with the originally prespecificied (less informative) priors.
+
+Color filled curves represent marginal posterior distributions. Color filled areas
+represent the posterior probability of noninferiority (Pr < 1.14), as the
+percentages on top of each panel. Interval bars depict the posterior median and
+95% credible intervals. Solid gray lines represent underlying prior distributions.
+Each belief is labeled on top of each figure.
+
+Underlying prior distributions: “Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.105, 0.416^2)$; “Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.105, 0.416^2)$
+
+
+\newpage
+
+## Appendix Table 5: Baricitinib vs. Tocilizumab Meta-Regression Sensitivity Analysis
+
+```{r meta regression sensitivity analysis bari table}
+
+draws_bari =
+  dplyr::tibble(
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci)$value
+  ) |> 
+  tidyr::pivot_longer(1:2)
+
+# Bari
+ror_bari = 
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  ggdist::median_hdi(exp(value)) |> 
+  dplyr::summarise(Belief = name,
+                   "ROR (95% CrI)" = stringr::str_c(
+                     round(`exp(value)`, 2),
+                     " (", round(.lower, 2), ", ", round(.upper, 2), ")"
+                     )
+                   )
+
+proba_bari =
+  draws_bari |> 
+  dplyr::group_by(name) |> 
+  dplyr::summarise("Probability of Noninferiority, %" =
+                     100*round(mean(value < ni_margin),2),
+                   "Probability of Superiority, %" =
+                     100*round(mean(value < log(1)),2)
+                   ) |> 
+  dplyr::rename("Belief" = name)
+
+results_bari = dplyr::left_join(ror_bari, proba_bari) |> 
+  dplyr::mutate(
+    Belief = dplyr::case_when(
+      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+    Belief = factor(Belief, levels = c("Optimistic for Baricitinib",
+                                       "Optimistic for Tocilizumab"))
+    ) |> 
+  dplyr::arrange(Belief)
+
+# "Table Footnote" https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf
+
+names(results_bari)[3] = 
+  paste0(names(results_bari)[3],
+         " (1)")
+
+names(results_bari)[4] = 
+  paste0(names(results_bari)[4],
+         " (2)")
+
+results_bari |> 
+  # https://stackoverflow.com/questions/53794142/increase-line-row-spacing-with-kableextra
+  kableExtra::kbl(booktabs = T, linesep = "\\addlinespace") |>
+  kableExtra::kable_styling(latex_options = "hold_position",
+                            full_width = T) |> 
+  kableExtra::footnote(number = c("Posterior probability below the noninferiority margin (1.14 ROR)",
+                                  "Posterior probability below 1.0 ROR"),
+                       general = "Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
+
+```
+
+Post-hoc sensitivity analysis on baricitinib vs. tocilizumab meta-regression model
+(ratio of odds ratios) with the originally prespecificied (less informative) priors.
+
+Underlying prior distributions: “Optimistic for Baricitinib",
+$\operatorname{Normal}(-0.105, 0.416^2)$; “Optimistic for Tocilizumab",
+$\operatorname{Normal}(0.105, 0.416^2)$
+
+
+\newpage
+
+## Appendix Figure 8: Sarilumab vs. Tocilizumab Meta-Regression Sensitivity Analysis
 
 ```{r  meta regressions sensitivity prior information}
 ## Means
@@ -2052,7 +2321,7 @@ ggsave(width = 7,
                   "sarilumab_meta_regressions_sensitivity.pdf"))
 ```
 
-```{r meta regressions sensitivity plot display}
+```{r meta regressions sensitivity plot sari display}
 cowplot::ggdraw() + 
   # https://stackoverflow.com/questions/50026862/the-draw-image-function-from-cowplot-results-in-blurred-pdfs
   cowplot::draw_image(
@@ -2063,7 +2332,8 @@ cowplot::ggdraw() +
 ```
 
 Post-hoc sensitivity analysis on sarilumab vs. tocilizumab meta-regression model
-(ratio of odds ratios).
+(ratio of odds ratios) with the originally prespecificied (less informative) priors.
+
 Color filled curves represent marginal posterior distributions. Color filled areas
 represent the posterior probability of noninferiority (Pr < 1.14), as the
 percentages on top of each panel. Interval bars depict the posterior median and
@@ -2077,7 +2347,7 @@ $\operatorname{Normal}(0.049, 0.193^2)$
 
 \newpage
 
-## Appendix Table 5: Sarilumab vs. Tocilizumab Sensitivity Analysis
+## Appendix Table 6: Sarilumab vs. Tocilizumab Meta-Regression Sensitivity Analysis
 
 ```{r meta regression sensitivity analysis table}
 draws_sari =
@@ -2130,14 +2400,18 @@ names(results_sari)[4] =
          " (2)")
 
 results_sari |> 
-  kableExtra::kbl(booktabs = T, linesep = " ") |>
+  # https://stackoverflow.com/questions/53794142/increase-line-row-spacing-with-kableextra
+  kableExtra::kbl(booktabs = T, linesep = "\\addlinespace") |>
   kableExtra::kable_styling(latex_options = "hold_position",
                             full_width = T) |> 
-  kableExtra::footnote(number = c("Probability of Noninferiority, %",
-                                  "Probability of Superiority, %"),
+  kableExtra::footnote(number = c("Posterior probability below the noninferiority margin (1.14 ROR)",
+                                  "Posterior probability below 1.0 ROR"),
                        general = "Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
 
 ```
+
+Meta-regression sensitivity analyses with the originally prespecificied 
+(less informative) priors
 
 Underlying prior distributions: “Optimistic for Sarilumab",
 $\operatorname{Normal}(-0.049, 0.193^2)$; “Optimistic for Tocilizumab",
@@ -2146,10 +2420,64 @@ $\operatorname{Normal}(0.049, 0.193^2)$
 
 \newpage
 
-## Appendix Table 6: Baricitinib vs. Tocilizumab Sensitivity Analysis
+## Appendix Table 7: Baricitinib vs. Tocilizumab Sensitivity Analysis (RECOVERY Bari)
 
 
 ```{r}
+parameter_fun = function(model){
+  model |>
+    tidybayes::tidy_draws() |>
+    tidyr::pivot_longer(5) # Beta_1 parameter (5th column)
+}
+
+draws_bari_sens =
+  dplyr::tibble(
+    "vague" = parameter_fun(mr_bari_vague_sens)$value,
+    "skeptical" = parameter_fun(mr_bari_skeptical_sens)$value,
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari_direct_sens)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci_direct_sens)$value
+  ) |> 
+  tidyr::pivot_longer(1:4)
+
+# Bari
+ror_bari_sens = 
+  draws_bari_sens |> 
+  dplyr::group_by(name) |> 
+  ggdist::median_hdi(exp(value)) |> 
+  dplyr::summarise(Belief = name,
+                   "ROR (95% CrI)" = stringr::str_c(
+                     round(`exp(value)`, 2),
+                     " (", round(.lower, 2), ", ", round(.upper, 2), ")"
+                     )
+                   ) |> 
+  dplyr::mutate(treatment = "Baricitinib vs. Tocilizumab")
+
+proba_bari_sens =
+  draws_bari_sens |> 
+  dplyr::group_by(name) |> 
+  dplyr::summarise("Probability of Noninferiority, %" =
+                     100*round(mean(value < ni_margin),2),
+                   "Probability of Superiority, %" =
+                     100*round(mean(value < log(1)),2)
+                   ) |> 
+  dplyr::rename("Belief" = name)
+
+pre_table_sens = dplyr::left_join(ror_bari_sens, proba_bari_sens) |> 
+  dplyr::mutate(
+    Belief = dplyr::case_when(
+      Belief == "vague" ~ "Vague",
+      Belief == "skeptical" ~ "Skeptical",
+      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib (Karampitsakos et al.)",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab (inverse Karampitsakos et al.)"),
+    Belief = factor(Belief, levels = c("Vague",
+                                       "Skeptical",
+                                       "Optimistic for Baricitinib (Karampitsakos et al.)",
+                                       "Optimistic for Tocilizumab (inverse Karampitsakos et al.)"))
+    ) |> 
+  dplyr::arrange(Belief) |> 
+  dplyr::group_by(treatment)
+
+
 # "Table Footnote" https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf
 
 names(pre_table_sens)[4] = 
@@ -2163,23 +2491,27 @@ names(pre_table_sens)[5] =
 pre_table_sens |> 
   dplyr::ungroup() |> 
   dplyr::select(-treatment) |> 
-  kableExtra::kbl(booktabs = T, linesep = " ") |>
+  # https://stackoverflow.com/questions/53794142/increase-line-row-spacing-with-kableextra
+  kableExtra::kbl(booktabs = T, linesep = "\\addlinespace") |>
   kableExtra::kable_styling(latex_options = "hold_position",
                             full_width = T) |> 
-  kableExtra::footnote(number = c("Probability of Noninferiority, %",
-                                  "Probability of Superiority, %"),
+  kableExtra::footnote(number = c("Posterior probability below the noninferiority margin (1.14 ROR)",
+                                  "Posterior probability below 1.0 ROR"),
                        general = "Abbreviations: ROR, ratio of odds ratios; CrI, credible interval")
 
 
 ```
 
+Sensitivity analysis including all patients treated with corticosteroids,
+regardless of tocilizumab use, in RECOVERY Bari. 
+
 Underlying prior distributions: 
 "Skeptical",
 $\operatorname{Normal}(0, 0.354^2)$;
-“Optimistic for Baricitinib",
-$\operatorname{Normal}(-0.105, 0.416^2)$;
-“Optimistic for Tocilizumab",
-$\operatorname{Normal}(0.105, 0.416^2)$;
+“Optimistic for Baricitinib (Karampitsakos et al.)",
+$\operatorname{Normal}(-0.335, 0.264^2)$;
+“Optimistic for Tocilizumab (inverse Karampitsakos et al.)",
+$\operatorname{Normal}(0.335, 0.264^2)$;
 "Vague", 
 $\operatorname{Normal}(0, 4^2)$;
 

@@ -210,8 +210,8 @@ forest_fun_bari_sari = function(){
 
   metafor::forest(d_sari_bari$yi, d_sari_bari$vi,
                   cex=0.75, # text size
-                  ylim=c(0, 22.5), # Y length
-                  rows=c(3:9, 15:18),
+                  ylim=c(0, 23.5), # Y length
+                  rows=c(3:10, 16:19),
                   alim=log(c(0.25, 4)),
                   xlim=c(-8, 3.5), 
                   at=log(c(0.25, 0.5, 1, 2, 4)),
@@ -224,14 +224,14 @@ forest_fun_bari_sari = function(){
                   order=d_sari_bari$treatment,
                   pch = 19) # Circles 
   
-  abline(h=14) # horizontal line
+  abline(h=15) # horizontal line
   
   metafor::addpoly(x = bari_results$y,
                    ci.lb = bari_results$ymin,
                    ci.ub = bari_results$ymax,
                    
                    mlab = "Total [95% CrI]",
-                   row=13,
+                   row=14,
                    efac = 1, # polygon size
                    atransf=exp)
   
@@ -239,7 +239,7 @@ forest_fun_bari_sari = function(){
                        treatment == "baricitinib")
   
   text(c(-4,-2.5),
-       13,
+       14,
        c(paste(sum(bari$trt_events), "/", sum(bari$trt_total)),
          paste(sum(bari$control_events), "/", sum(bari$control_total))),
        font = 2, cex = 0.75)
@@ -257,18 +257,18 @@ forest_fun_bari_sari = function(){
                    annotate=FALSE,
                    
                    mlab = " ", # label
-                   row=12, # location
+                   row=13, # location
                    atransf=exp,
                    efac = 0.5, # polygon size
                    col=colp, border=colp
   )
   
-  text(-7.95, 12,
+  text(-7.95, 13,
        tau_text(ma_bari),
        pos=4,
        cex=0.8)
   
-  text(1.55, 12,
+  text(1.55, 13,
        PI_text(bari_pred),
        pos=4,
        cex = 0.85)
@@ -323,28 +323,28 @@ forest_fun_bari_sari = function(){
   
   # Headers
   text(mean(c(-4,-2.5)) - 0.1,
-       22.5,
+       23.5,
        "No of events / total",
        font=2,
        cex = 0.7)
   
   # Horizontal line
   segments(-4 - 0.6,
-           22,
+           23,
            -2.5 + 0.35,
-           22)
+           23)
   
-  text(c(-4,-2.5), 21.5, c("Experimental","Control"), font = 2, cex = 0.7)
+  text(c(-4,-2.5), 22.5, c("Experimental","Control"), font = 2, cex = 0.7)
   
   text(c(-0.6,0.6), # X axis
-       19.5, # Y axis
+       20.5, # Y axis
        cex = 0.7, # size
        c("Favors\nExperimental","Favors\nControl"),
        font = 1,
        pos=c(2,4), # Right + Left aligned
        offset=-1)
   
-  text(-7.2,c(19.5, 10.5),
+  text(-7.2,c(20.5, 11.5),
        c("Baricitinib", "Sarilumab"),
        font=4,
        cex = 0.9)

@@ -53,23 +53,14 @@ mr_sari_vague = readRDS(here::here("output", "fits",
 
 mr_bari_skeptical = readRDS(here::here("output", "fits",
                                        "mr_bari_skeptical.Rds"))
-mr_bari_optimistic_bari = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_bari.Rds"))
-mr_bari_optimistic_toci = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_toci.Rds"))
+mr_bari_optimistic_bari_direct = readRDS(
+  here::here("output", "fits", "sensitivity_analyses",
+             "mr_bari_optimistic_bari_direct.Rds"))
+mr_bari_optimistic_toci_direct = readRDS(
+  here::here("output", "fits", "sensitivity_analyses",
+             "mr_bari_optimistic_toci_direct.Rds"))
 mr_bari_vague = readRDS(here::here("output", "fits",
                                    "mr_bari_vague.Rds"))
-
-# Sensitivity analysis
-
-mr_bari_skeptical_sens = readRDS(here::here("output", "fits",
-                                       "mr_bari_skeptical_sens.Rds"))
-mr_bari_optimistic_bari_sens = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_bari_sens.Rds"))
-mr_bari_optimistic_toci_sens = readRDS(here::here("output", "fits",
-                                             "mr_bari_optimistic_toci_sens.Rds"))
-mr_bari_vague_sens = readRDS(here::here("output", "fits",
-                                   "mr_bari_vague_sens.Rds"))
 
 ```
 
@@ -137,6 +128,8 @@ pre_table1 |>
          path =  here("output", "tables"))
 ```
 
+# Table 2
+
 ```{r}
 # Function to extract posterior draws more easily
 
@@ -150,8 +143,8 @@ draws_bari =
   dplyr::tibble(
     "vague" = parameter_fun(mr_bari_vague)$value,
     "skeptical" = parameter_fun(mr_bari_skeptical)$value,
-    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari)$value,
-    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci)$value
+    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari_direct)$value,
+    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci_direct)$value
   ) |> 
   tidyr::pivot_longer(1:4)
 
@@ -163,19 +156,8 @@ draws_sari =
     "optimistic_toci" = parameter_fun(mr_sari_optimistic_toci_remapcap)$value
   ) |> 
   tidyr::pivot_longer(1:4)
-
-draws_bari_sens =
-  dplyr::tibble(
-    "vague" = parameter_fun(mr_bari_vague_sens)$value,
-    "skeptical" = parameter_fun(mr_bari_skeptical_sens)$value,
-    "optimistic_bari" = parameter_fun(mr_bari_optimistic_bari_sens)$value,
-    "optimistic_toci" = parameter_fun(mr_bari_optimistic_toci_sens)$value
-  ) |> 
-  tidyr::pivot_longer(1:4)
 ```
 
-
-# Table 2
 
 ```{r}
 ni_margin = log(1.139606)
@@ -208,12 +190,12 @@ results_bari = dplyr::left_join(ror_bari, proba_bari) |>
     Belief = dplyr::case_when(
       Belief == "vague" ~ "Vague",
       Belief == "skeptical" ~ "Skeptical",
-      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib",
-      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
+      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib (Karampitsakos et al.)",
+      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab (inverse Karampitsakos et al.)"),
     Belief = factor(Belief, levels = c("Vague",
                                        "Skeptical",
-                                       "Optimistic for Baricitinib",
-                                       "Optimistic for Tocilizumab"))
+                                       "Optimistic for Baricitinib (Karampitsakos et al.)",
+                                       "Optimistic for Tocilizumab (inverse Karampitsakos et al.)"))
     ) |> 
   dplyr::arrange(Belief)
 
@@ -300,54 +282,6 @@ table2 |>
  gt::gtsave("table_2.html",
         path =  here::here("output", "tables"))
 
-
-```
-
-
-# Sensitivity analysis
-
-
-```{r}
-# Bari
-ror_bari_sens = 
-  draws_bari_sens |> 
-  dplyr::group_by(name) |> 
-  ggdist::median_hdi(exp(value)) |> 
-  dplyr::summarise(Belief = name,
-                   "ROR (95% CrI)" = stringr::str_c(
-                     round(`exp(value)`, 2),
-                     " (", round(.lower, 2), ", ", round(.upper, 2), ")"
-                     )
-                   ) |> 
-  dplyr::mutate(treatment = "Baricitinib vs. Tocilizumab")
-
-proba_bari_sens =
-  draws_bari_sens |> 
-  dplyr::group_by(name) |> 
-  dplyr::summarise("Probability of Noninferiority, %" =
-                     100*round(mean(value < ni_margin),2),
-                   "Probability of Superiority, %" =
-                     100*round(mean(value < log(1)),2)
-                   ) |> 
-  dplyr::rename("Belief" = name)
-
-pre_table_sens = dplyr::left_join(ror_bari_sens, proba_bari_sens) |> 
-  dplyr::mutate(
-    Belief = dplyr::case_when(
-      Belief == "vague" ~ "Vague",
-      Belief == "skeptical" ~ "Skeptical",
-      Belief == "optimistic_bari" ~ "Optimistic for Baricitinib",
-      Belief == "optimistic_toci" ~ "Optimistic for Tocilizumab"),
-    Belief = factor(Belief, levels = c("Vague",
-                                       "Skeptical",
-                                       "Optimistic for Baricitinib",
-                                       "Optimistic for Tocilizumab"))
-    ) |> 
-  dplyr::arrange(Belief) |> 
-  dplyr::group_by(treatment)
-
-saveRDS(pre_table_sens,
-        here("output", "tables", "supplementary", "table_sens_data.Rds"))
 
 ```
 

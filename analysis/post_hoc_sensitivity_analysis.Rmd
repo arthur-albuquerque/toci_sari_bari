@@ -148,12 +148,148 @@ m_sari_optimistic_toci_remapcap =
 )
 ```
 
+## Tocilizumab vs. Baricitinib
+
+Here are the sensitivity analyses priors. Here, we used the results from 
+Karampitsakos et al. (DOI 10.1101/2022.06.13.22276211) to define the SDs for
+both "Optimistic for Baricitinib" and "Optimistic for Tocilizumab" priors:
+
+$$
+\begin{align*}
+y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
+\theta_i & \sim Normal(\mu, \tau^2)\\
+\mu &= \beta_0 + \beta_1 x_i\\
+\\
+\beta_0 & \sim \operatorname{Normal}(0, 0.75^2) \tag{Priors}\\
+\tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)\\
+\beta_{1[Baricitinib]} & \sim \operatorname{Normal}(-0.335, 0.264^2)\\
+\beta_{1[Tocilizumab]} & \sim \operatorname{Normal}(0.335, 0.264^2)\\
+\end{align*}
+$$
+
+```{r}
+# Data provided by Karampitsakos et al. through email 
+
+# Calculate crude log odds ratio
+
+bari_toci_data = 
+  metafor::escalc(
+  measure = "OR", # log odds ratio
+  
+  # Baricitinib
+  ai = 40,
+  n1i = 125,
+  
+  # Tocilizumab
+  ci = 50,
+  n2i = 126
+) %>%
+  as_tibble() %>% 
+  # Calculate standard error
+  dplyr::mutate(sei = sqrt(vi))
+
+## Mean
+mean_log_bari = bari_toci_data$yi[1]
+
+## SDs
+bari_sd_optimistic_bari = bari_toci_data$sei[1]
+bari_sd_optimistic_toci = bari_sd_optimistic_bari
+```
+
+```{r}
+# General model characteristics 
+## Formula
+mf = 
+  formula(yi | se(sei) ~ 0 + Intercept + treatment + (1 | study))
+## Priors for beta_0 and tau
+informative = bayesmeta::TurnerEtAlPrior("all-cause mortality",
+                                         "pharmacological",
+                                         "placebo / control")
+logmean = informative$parameters["tau", "mu"]
+logsd = informative$parameters["tau", "sigma"]
+# tau:
+# logmean
+# -1.975
+# logsd
+# 0.67
+priors = 
+  brms::prior(normal(0, 0.75), class = "b", coef = "Intercept") +
+  brms::prior(lognormal(-1.975, 0.67), class = "sd", group = "study")
+```
+
+Fit models
+
+```{r}
+## "Optimistic for Baricitinib" model
+# mean_log_bari
+# -0.3350615
+# bari_sd_optimistic_bari
+# 0.2644288
+
+m_bari_optimistic_bari_direct =
+  brms::brm(
+  
+  # only include RECOVERY Bari without patients treated with Tocilizumab  
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(-0.3350615, 0.2644288), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "sensitivity_analyses",
+                    "mr_bari_optimistic_bari_direct.Rds"),
+  file_refit = "on_change"
+)
+## "Optimistic for Tocilizumab" model
+# -mean_log_bari
+# 0.3350615
+# bari_sd_optimistic_bari
+# 0.2644288
+
+m_bari_optimistic_toci_direct =
+  brms::brm(
+  
+  # only include RECOVERY Bari without patients treated with Tocilizumab    
+  data = d_logOR |> dplyr::filter(treatment != "sarilumab", study != "RECOVERY Bari"),
+  family = gaussian,
+  formula = mf,
+  
+  prior = priors +
+    brms::prior(normal(0.3350615, 0.2644288), class = "b", coef = "treatmentbaricitinib"),
+  sample_prior = TRUE,
+  
+  control = list(adapt_delta = .96),
+  backend = "cmdstanr", # faster
+  warmup = 2000,
+  iter = 4000,
+  seed = 123,
+  cores = parallel::detectCores(),
+  chains = 4,
+  
+  file = here::here("output", "fits", "sensitivity_analyses",
+                    "mr_bari_optimistic_toci_direct.Rds"),
+  file_refit = "on_change"
+)
+```
+
 # Model diagnostics
 
 ```{r}
 # Load function
 source(here::here("functions", "diag_plot.R"))
 ```
+
+## Tocilizumab vs. Sarilumab
 
 "Optimistic for Sarilumab" model
 
@@ -190,6 +326,48 @@ brms::pp_check(m_sari_optimistic_toci_remapcap,
                ndraws = 50) 
 
 brms::pp_check(m_sari_optimistic_toci_remapcap,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+## Tocilizumab vs. Baricitinib
+
+"Optimistic for Baricitinib" model
+
+```{r}
+diag_plot(model = m_bari_optimistic_bari_direct,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_bari_direct,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+
+brms::pp_check(m_bari_optimistic_bari_direct,
+               type = "ecdf_overlay_grouped",
+               group = "treatment",
+               ndraws = 50)
+```
+
+"Optimistic for Tocilizumab" model
+
+```{r}
+diag_plot(model = m_bari_optimistic_toci_direct,
+          pars_list = c("b_Intercept", "b_treatmentbaricitinib", "sd_study__Intercept"),
+          ncol_trace = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+brms::pp_check(m_bari_optimistic_toci_direct,
+               type = "dens_overlay_grouped",
+               group = "treatment",
+               ndraws = 50) 
+
+brms::pp_check(m_bari_optimistic_toci_direct,
                type = "ecdf_overlay_grouped",
                group = "treatment",
                ndraws = 50)

@@ -5,19 +5,6 @@
 \documentclass[
   12pt,
 ]{article}
-\title{\textbf{Appendix}}
-\usepackage{etoolbox}
-\makeatletter
-\providecommand{\subtitle}[1]{% add subtitle to \maketitle
-  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
-}
-\makeatother
-\subtitle{\textbf{Effect of Tocilizumab, Sarilumab, and Baricitinib on
-Mortality Among Patients Hospitalized for COVID-19 Treated with
-Corticosteroids: A Systematic Review and Meta-Analysis}}
-\author{}
-\date{\vspace{-2.5em}}
-
 \usepackage{amsmath,amssymb}
 \usepackage{lmodern}
 \usepackage{iftex}
@@ -138,6 +125,18 @@ Corticosteroids: A Systematic Review and Meta-Analysis}}
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
+
+\title{\textbf{Appendix}}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{\textbf{Effect of Tocilizumab, Sarilumab, and Baricitinib on
+Mortality Among Patients Hospitalized for COVID-19 Treated with
+Corticosteroids: A Systematic Review and Meta-Analysis}}
+\date{\vspace{-2.5em}}
 
 \begin{document}
 \maketitle
@@ -294,7 +293,7 @@ al.(\protect\hyperlink{ref-turner2015}{2})
 Although the definition of small or large between-study heterogeneity is
 arbitrary, previous work suggests cutoff values (``reasonable''
 heterogeneity between 0.1 and 0.5, and ``fairly high'' between 0.5 and
-1.0.(\protect\hyperlink{ref-spiegelhalter2004}{3}) We added a category
+1.0).(\protect\hyperlink{ref-spiegelhalter2004}{3}) We added a category
 for low heterogeneity (between 0 and 0.1):
 
 \begin{align*}
@@ -334,7 +333,7 @@ To further explore the impact of between-study heterogeneity, we
 evaluated the posterior predictive distribution in each meta-analysis.
 This distribution allows inference about ``\ldots what we would expect
 to see in a new study population that is exchangeable with the studies
-included in our meta-analysis.''(\protect\hyperlink{ref-welton2020}{5})
+included in our meta-analysis''.(\protect\hyperlink{ref-welton2020}{5})
 
 \[\theta_{new} \sim \operatorname{Normal}(\mu, \tau^2)\]
 
@@ -356,29 +355,35 @@ noninferior to tocilizumab. A sensitive approach to answer this question
 is to separately meta-analyze direct comparisons between tocilizumab
 vs.~baricitinib and tocilizumab vs.~sarilumab. However, a preliminary
 search by our research group showed a limited number of studies that
-report such comparisons.(\protect\hyperlink{ref-zotero-3144}{7}) Thus,
-we decided to only estimate the noninferiority probability of sarilumab
-and baricitinib vs.~tocilizumab through indirect (across-trials)
+report such
+comparisons.(\protect\hyperlink{ref-zotero-3144}{7},\protect\hyperlink{ref-karampitsakos2022}{8})
+Thus, we decided to estimate noninferiority probabilities of sarilumab
+and baricitinib vs.~tocilizumab mostly through indirect (across-trials)
 comparisons. Because of the fragility of such comparisons, it is of
 great interest to test the robustness of these estimates with multiple
 prior distributions.
 
 Bayesian network meta-analyses are historically used to estimate direct,
 indirect, and mixed-effects when more than two treatment comparisons are
-available.(\protect\hyperlink{ref-dias2018}{8}) However, this approach
+available.(\protect\hyperlink{ref-dias2018}{9}) However, this approach
 does not allow one to assign prior distributions to specific comparisons
-within the network, such as an indirect effect. To overcome this
-limitation, we fitted Bayesian random-effect meta-regression models to
+within the network, such as an indirect effect. Further, the primary
+reason for not performing a Bayesian NMA is the lack of direct evidence
+between several of the arms forcing a reliance on the indirect evidence
+with no means of assessing its compatible with direct evidence. We thus
+sought to perform multiple sensitivity analyses with different priors to
+account for differing beliefs of non-inferiority. To overcome these
+limitations, we fitted Bayesian random-effect meta-regression models to
 estimate the indirect differences mentioned above (two separate sets of
 models: tocilizumab vs.~baricitinib; tocilizumab
-vs.~sarilumab).(\protect\hyperlink{ref-pitchforth2012}{9}) These models
+vs.~sarilumab).(\protect\hyperlink{ref-pitchforth2012}{10}) These models
 are identical to meta-regressions with a dichotomous covariate used to
-evaluate subgroup differences.(\protect\hyperlink{ref-thompson2002}{10})
+evaluate subgroup differences.(\protect\hyperlink{ref-thompson2002}{11})
 This approach allows one to apply a plethora of prior distributions
 specifically to the indirect comparison between treatments.
 
 Both baricitinib and sarilumab models are identical, and are described
-as:(\protect\hyperlink{ref-pitchforth2012}{9})
+as:(\protect\hyperlink{ref-pitchforth2012}{10})
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2)\\
@@ -448,7 +453,7 @@ before:(\protect\hyperlink{ref-turner2015}{2})
 In addition to the parameters mentioned above, we should also assign a
 prior distribution for the indirect comparison parameter
 (\(\beta_{1, T}\)). Inspired by the guidelines provided by Zampieri et
-al.,(\protect\hyperlink{ref-zampieri2021}{11}) we fitted different
+al.,(\protect\hyperlink{ref-zampieri2021}{12}) we fitted different
 models to represent distinct beliefs. Before discussing these prior
 distributions, we will first elucidate the underlying rationale of this
 parameter.
@@ -482,27 +487,32 @@ studies:
 \frac {\downarrow OR_{comparator}}{\uparrow OR_{tocilizumab}} \rightarrow ROR < 1
 \end{align*}
 
-We separately applied \(4\) normally distributed prior distributions for
-\(\beta_{1, T}\) in each model (sarilumab and baricitinib's models),
-which can be described based on the ``prior belief'' and ``belief
-strength.'' While the former reflects the distribution's mean, the
-latter reflects the distribution's standard deviation.
+We had originally planned to only apply \(4\) prior distributions for
+\(\beta_{1, T}\) in each model (sarilumab and baricitinib's models).
+However, as further explained later in the \textbf{``Post-hoc
+Analyses''} Section, we decided to incorporate new direct evidence
+between baricitinib/sarilumab vs.~tocilizumab into our analyses. We will
+now describe the \(4\) originally prespecified priors. However, we note
+that, from these, only results from \emph{``Skeptical''} and
+\emph{``Vague''} models are presented in the main meta-regression
+figure/table in this manuscript. Other are still shown, but as
+supplementary material.
 
-In the model comparing \textbf{sarilumab} to tocilizumab, the beliefs
-are:
+In the model comparing \textbf{sarilumab} to tocilizumab, the originally
+prespecified beliefs are:
 
 \begin{itemize}
 \item
-  ``Skeptical,'' which expects no difference between sarilumab and
+  ``Skeptical'', which expects no difference between sarilumab and
   tocilizumab studies (mean centered at \(1\)) with \(95\%\) probability
   between \(0.5\) and \(2\) (linear scale, ratio of odds ratios). These
   values represent a weak belief
-  strength,(\protect\hyperlink{ref-zampieri2021}{11}) based on the
+  strength,(\protect\hyperlink{ref-zampieri2021}{12}) based on the
   little information currently available on this topic.
   \(\operatorname{Normal}(0, 0.354^2)\). Results from this prior take
   part in the main meta-regression figure in this article.
 \item
-  ``Optimistic for Sarilumab,'' which expects a greater mortality
+  ``Optimistic for Sarilumab'', which expects a greater mortality
   reduction due to sarilumab use in comparison to tocilizumab. The mean
   is centered at \(0.952\) (linear scale, ratio of odds ratios), which
   was based on the single study that directly compared sarilumab to
@@ -534,18 +544,18 @@ are:
   consider too informative in this case, given that it would be more
   informative than the study mentioned above -- we believe this prior
   represents weak belief
-  strength.(\protect\hyperlink{ref-zampieri2021}{11})
+  strength.(\protect\hyperlink{ref-zampieri2021}{12})
 \item
-  ``Optimistic for Tocilizumab,'' which expects a greater mortality
+  ``Optimistic for Tocilizumab'', which expects a greater mortality
   reduction due to tocilizumab use in comparison to sarilumab. The mean
   is centered at \(1.05\), the reciprocal of \(0.952\). Similarly, this
   prior belief will also have a weak strength, represented by 40\% of
   probability that the ratio of odds ratios is lower than
-  \(1\).(\protect\hyperlink{ref-zampieri2021}{11})
+  \(1\).(\protect\hyperlink{ref-zampieri2021}{12})
   \(\operatorname{Normal}(0.049, 0.193^2)\) Results from this prior take
   part in the Appendix meta-regression figure in this article.
 \item
-  ``Vague,'' which represents no prior belief with no strength.
+  ``Vague'', which represents no prior belief with no strength.
   \(\operatorname{Normal}(0, 4^2)\). Results from this prior take part
   in the main meta-regression figure in this article.
 \end{itemize}
@@ -554,7 +564,7 @@ The first three distributions are shown below:
 
 \begin{center}\includegraphics{supplementary_material_files/figure-latex/all priors sari meta regressions-1} \end{center}
 
-Prior distributions for \(beta\_{1, Sari}\) (ratio of odds ratios) in
+Prior distributions for \(\beta_{1, Sari}\) (ratio of odds ratios) in
 models comparing sarilumab to tocilizumab. Panel A: `Skeptical' prior.
 The Normal(\(0\), \(0.354^2\)) distribution approximately concentrates
 \(95\)\% of probability density between \(0.5\) and \(2.0\) in the
@@ -565,23 +575,21 @@ probability density above \(1\). Panel C: `Optimistic for Tocilizumab'
 prior. The Normal(\(0.049\), \(0.193^2\)) distribution approximately
 concentrates \(40\)\% of probability density below \(1\).
 
-\newpage
-
-In the model comparing \textbf{baricitinib} to tocilizumab, the beliefs
-are:
+In the model comparing \textbf{baricitinib} to tocilizumab, the
+originally prespecified beliefs are:
 
 \begin{itemize}
 \item
-  ``Skeptical,'' which expects no difference between baricitinib and
+  ``Skeptical'', which expects no difference between baricitinib and
   tocilizumab studies (mean centered at \(1\)) with \(95\%\) probability
   between \(0.5\) and \(2\) (linear scale, ratio of odds ratios). These
   values represent a weak belief
-  strength,(\protect\hyperlink{ref-zampieri2021}{11}) based on the
+  strength,(\protect\hyperlink{ref-zampieri2021}{12}) based on the
   little information currently available on this topic.
   \(\operatorname{Normal}(0, 0.354^2)\). Results from this prior take
   part in the main meta-regression figure in this article.
 \item
-  ``Optimistic for Baricitinib,'' which expects a greater mortality
+  ``Optimistic for Baricitinib'', which expects a greater mortality
   reduction due to baricitinib use in comparison to tocilizumab. The
   mean is centered at \(0.9\) (linear scale, ratio of odds ratios),
   which was arbitrarily chosen based on clinical judgment that a 10\%
@@ -589,20 +597,20 @@ are:
   information previously available, we considered that there is 40\% of
   probability that the ratio of odds ratios is greater than 1,
   representing a weak belief
-  strength.(\protect\hyperlink{ref-zampieri2021}{11})
+  strength.(\protect\hyperlink{ref-zampieri2021}{12})
   \(\operatorname{Normal}(-0.105, 0.416^2)\). Results from this prior
-  take part in the main meta-regression figure in this article.
+  take part in the Appendix meta-regression figure in this article.
 \item
-  ``Optimistic for Tocilizumab,'' which expects a greater mortality
+  ``Optimistic for Tocilizumab'', which expects a greater mortality
   reduction due to tocilizumab use in comparison to sarilumab. The mean
   is centered at \(1.11\), the reciprocal of \(0.9\). Similarly, this
   prior belief will also have a weak strength, represented by 40\% of
   probability that the ratio of odds ratios is lower than
-  \(1\).(\protect\hyperlink{ref-zampieri2021}{11})
+  \(1\).(\protect\hyperlink{ref-zampieri2021}{12})
   \(\operatorname{Normal}(0.105, 0.416^2)\). Results from this prior
-  take part in the main meta-regression figure in this article.
+  take part in the Appendix meta-regression figure in this article.
 \item
-  ``Vague,'' which represents no prior belief with no strength.
+  ``Vague'', which represents no prior belief with no strength.
   \(\operatorname{Normal}(0, 4^2)\). Results from this prior take part
   in the main meta-regression figure in this article.
 \end{itemize}
@@ -611,7 +619,7 @@ The first three distributions are shown below:
 
 \begin{center}\includegraphics{supplementary_material_files/figure-latex/unnamed-chunk-2-1} \end{center}
 
-Prior distributions for \(beta\_{1, Bari}\) (ratio of odds ratios) in
+Prior distributions for \(\beta_{1, Bari}\) (ratio of odds ratios) in
 models comparing baricitinib to tocilizumab. Panel A: `Skeptical' prior.
 The Normal(\(0\), \(0.354^2\)) distribution approximately concentrates
 \(95\)\% of probability density between \(0.5\) and \(2.0\) in the
@@ -624,8 +632,8 @@ concentrates \(40\)\% of probability density below \(1\).
 
 \newpage
 
-In summary, both sarilumab and baricitinib models can be fully described
-as:
+In summary, both originally prespecified sarilumab and baricitinib
+models can be fully described as:
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2)\\
@@ -659,26 +667,66 @@ where all parameters are in the log scale.
 
 One could argue that baricitinib's priors are stronger than sarilumab's
 given differences on the mean values (\(|0.105| > |0.049|\)). We note
-that, although the mean values are different because we only found prior
-evidence for the sarilumab vs.~tocilizumab comparison, these prior
-discrepancies are likely to be of little relevance. As depicted in the
-figures above, the baricitinib's priors have a greater mean but lower
-density than sarilumab's priors. Therefore, we do not expect these
+that, although the mean values are different because we only originally
+found prior evidence for the sarilumab vs.~tocilizumab comparison, these
+prior discrepancies are likely to be of little relevance. As depicted in
+the figures above, the baricitinib's priors have a greater mean but
+lower density than sarilumab's priors. Therefore, we do not expect these
 priors' impact on each marginal posterior distribution to be relevantly
 different.
 
 \newpage
 
-\hypertarget{post-hoc-analysis}{%
-\subsubsection{Post-hoc Analysis}\label{post-hoc-analysis}}
+\hypertarget{post-hoc-analyses}{%
+\subsubsection{Post-hoc Analyses}\label{post-hoc-analyses}}
 
-Regarding the sarilumab vs.~tocilizumab meta-regression model, we also
-performed a post-hoc analysis with a different set of priors.
+Regarding the \textbf{baricitinib vs.~tocilizumab} meta-regression
+model, we also performed a post-hoc analysis with a different set of
+priors.
+
+We fitted the exact same model, but with different ``Optimistic for
+Baricitinib'' and ``Optimistic for Tocilizumab'' priors (hereafter,
+``Optimistic for Baricitinib {[}Karampitsakos et al.{]}'' and
+``Optimistic for Tocilizumab {[}inverse Karampitsakos et al.{]})'':
+
+\begin{align*}
+y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
+\theta_i & \sim Normal(\mu, \tau^2)\\
+\mu &= \beta_0 + \beta_{1, Bari} x_i\\
+\\
+\beta_0 & \sim \operatorname{Normal}(0, 0.75^2) \tag{Priors}\\
+\tau & \sim \operatorname{Log-Normal}(-1.975, 0.67^2)\\
+\beta_{1, Bari[Baricitinib]} & \sim \operatorname{Normal}(-0.335, 0.264^2)\\
+\beta_{1, Bari[Tocilizumab]} & \sim \operatorname{Normal}(0.335, 0.264^2)\\
+\end{align*}
+
+These priors were constructed to reflect the exact same strength of the
+single study that directly compared baricitinib to
+tocilizumab.(\protect\hyperlink{ref-karampitsakos2022}{8}) All patients
+were treated with corticosteroids. The authors provided the following
+28-day mortality data by email request:
+
+\begin{itemize}
+\tightlist
+\item
+  50 patients in the tocilizumab arm died (out of 126 patients); 40
+  patients in the baricitinib arm died (out of 125).
+\end{itemize}
+
+We thus estimated a crude odds ratio of mean \(=\) -0.335 and standard
+error \(=\) 0.264 with the R package \emph{metafor}. \textbf{Results
+from these priors take part in the main meta-regression figure in this
+article.}
+
+\newpage
+
+Regarding the \textbf{sarilumab vs.~tocilizumab} meta-regression model,
+we also performed a post-hoc analysis with a different set of priors.
 
 We fitted the exact same model, but with different ``Optimistic for
 Sarilumab'' and ``Optimistic for Tocilizumab'' priors (hereafter,
-``Optimistic for Sarilumab (REMAP-CAP)'' and ``Optimistic for
-Tocilizumab (inverse REMAP-CAP)'':
+``Optimistic for Sarilumab {[}REMAP-CAP{]}'' and ``Optimistic for
+Tocilizumab {[}inverse REMAP-CAP{]})'':
 
 \begin{align*}
 y_i & \sim Normal(\theta_i, \sigma_i^2) \tag{Likelihood}\\
@@ -696,7 +744,7 @@ single study that directly compared sarilumab to
 tocilizumab.(\protect\hyperlink{ref-zotero-3144}{7})
 
 The new standard deviation of \(0.118\) was obtained through the
-formula:(\protect\hyperlink{ref-cochrane632}{12})
+formula:(\protect\hyperlink{ref-cochrane632}{13})
 
 \[\sigma = \frac{\ln(\operatorname{UCL}) - \ln(\operatorname{LCL})}{3.92}\]
 
@@ -706,8 +754,8 @@ probability density above/below \(1.0\) yielded by the main priors in
 the section before, these sensitivity priors yield \(34\%\),
 highlighting its greater strength.
 
-Results from these priors take part in the main meta-regression figure
-in this article.
+\textbf{Results from these priors take part in the main meta-regression
+figure in this article.}
 
 \newpage
 
@@ -722,11 +770,11 @@ above.
 
 One major criteria in noninferiority analyses is that superiority of
 active comparator --- in this case, tocilizumab --- in comparison to
-control has been shown.(\protect\hyperlink{ref-tsui2019}{13}) The WHO
+control has been shown.(\protect\hyperlink{ref-tsui2019}{14}) The WHO
 meta-analysis presented results in favor of tocilizumab's
-superiority.(\protect\hyperlink{ref-whoma}{14}) Thus, we will use the
+superiority.(\protect\hyperlink{ref-whoma}{15}) Thus, we will use the
 following formula to estimate our noninferiority
-margin:(\protect\hyperlink{ref-trone2020}{15})
+margin:(\protect\hyperlink{ref-trone2020}{16})
 
 \begin{align*}
 \gamma =  \left( \frac{1}{\theta} \right)^{1 - x} \\
@@ -737,12 +785,12 @@ the tocilizumab's mean effect size, and \(x\) is the percentage of
 tocilizumab's effect that is desired to be preserved. Regarding
 \(\theta\), we extracted the mean odds ratio regarding tocilizumab's
 effect in the subgroup of patients using corticosteroids (page 14 in
-their Supplement 2 (\protect\hyperlink{ref-whoma}{14})). We chose this
+their Supplement 2 (\protect\hyperlink{ref-whoma}{15})). We chose this
 subgroup because it represents our population of interest. Moreover, we
 will follow the U.S. Department of Health and Human Services Food and
 Drug Administration's recommendation and define \(x\) as \(50\%\) for
 our primary noninferiority
-analysis.(\protect\hyperlink{ref-tsui2019}{13},\protect\hyperlink{ref-fda}{16})
+analysis.(\protect\hyperlink{ref-tsui2019}{14},\protect\hyperlink{ref-fda}{17})
 Thus, our main noninferiority margin (in the linear scale) will be:
 
 \begin{align*}
@@ -804,18 +852,27 @@ Statistical Society: Series A (Statistics in Society) {[}Internet{]}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-zotero-3144}{}}%
 \CSLLeftMargin{7. }
-\CSLRightInline{Effectiveness of Tocilizumab, Sarilumab, and Anakinra
-for critically ill patients with COVID-19 The REMAP-CAP COVID-19 Immune
-Modulation Therapy Domain Randomized Clinical Trial. :21. }
+\CSLRightInline{\href{https://doi.org/10.1101/2021.06.18.21259133}{Effectiveness
+of Tocilizumab, Sarilumab, and Anakinra for critically ill patients with
+COVID-19 The REMAP-CAP COVID-19 Immune Modulation Therapy Domain
+Randomized Clinical Trial}. :21. }
+
+\leavevmode\vadjust pre{\hypertarget{ref-karampitsakos2022}{}}%
+\CSLLeftMargin{8. }
+\CSLRightInline{Karampitsakos T, Papaioannou O, Tsiri P, Katsaras M,
+Katsimpris A, Kalogeropoulos AP, et al. Tocilizumab versus baricitinib
+in hospitalized patients with severe COVID-19: an open label, randomized
+controlled trial {[}Internet{]}. 2022. Available from:
+\url{http://medrxiv.org/lookup/doi/10.1101/2022.06.13.22276211}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-dias2018}{}}%
-\CSLLeftMargin{8. }
+\CSLLeftMargin{9. }
 \CSLRightInline{Dias S, editor. Network meta-analysis for decision
 making. Hoboken, NJ: Wiley; 2018. 1 p. (Wiley Series in Statistics in
 Practice). }
 
 \leavevmode\vadjust pre{\hypertarget{ref-pitchforth2012}{}}%
-\CSLLeftMargin{9. }
+\CSLLeftMargin{10. }
 \CSLRightInline{Pitchforth JO, Mengersen KL. Bayesian Meta-Analysis. In:
 Case Studies in Bayesian Statistical Modelling and Analysis
 {[}Internet{]}. John Wiley \& Sons, Ltd; 2012 {[}cited 2022 Mar 5{]}. p.
@@ -823,14 +880,14 @@ Case Studies in Bayesian Statistical Modelling and Analysis
 \url{https://onlinelibrary.wiley.com/doi/abs/10.1002/9781118394472.ch7}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-thompson2002}{}}%
-\CSLLeftMargin{10. }
+\CSLLeftMargin{11. }
 \CSLRightInline{Thompson SG, Higgins JPT. How should meta-regression
 analyses be undertaken and interpreted? Statist Med {[}Internet{]}. 2002
 Jun 15 {[}cited 2021 Sep 7{]};21(11):1559--73. Available from:
 \url{https://onlinelibrary.wiley.com/doi/10.1002/sim.1187}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-zampieri2021}{}}%
-\CSLLeftMargin{11. }
+\CSLLeftMargin{12. }
 \CSLRightInline{Zampieri FG, Casey JD, Shankar-Hari M, Harrell FE,
 Harhay MO. Using Bayesian Methods to Augment the Interpretation of
 Critical Care Trials. An Overview of Theory and Example Reanalysis of
@@ -840,7 +897,7 @@ Am J Respir Crit Care Med {[}Internet{]}. 2021 Mar 1 {[}cited 2021 Mar
 \url{https://www.atsjournals.org/doi/10.1164/rccm.202006-2381CP}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-cochrane632}{}}%
-\CSLLeftMargin{12. }
+\CSLLeftMargin{13. }
 \CSLRightInline{Higgins J, Thomas J, Chandler J, Cumpston M, Li T, Page
 M, et al., editors. Cochrane Handbook for Systematic Reviews of
 Interventions version 6.2 (updated February 2021) {[}Internet{]}.
@@ -848,7 +905,7 @@ Cochrane; 2021 {[}cited 2022 Jan 15{]}. Available from:
 \url{https://training.cochrane.org/handbook}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-tsui2019}{}}%
-\CSLLeftMargin{13. }
+\CSLLeftMargin{14. }
 \CSLRightInline{Tsui M, Rehal S, Jairath V, Kahan BC. Most
 noninferiority trials were not designed to preserve active comparator
 treatment effects. Journal of Clinical Epidemiology {[}Internet{]}. 2019
@@ -856,7 +913,7 @@ Jun 1 {[}cited 2022 Mar 5{]};110:82--9. Available from:
 \url{https://www.jclinepi.com/article/S0895-4356(18)30599-7/fulltext}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-whoma}{}}%
-\CSLLeftMargin{14. }
+\CSLLeftMargin{15. }
 \CSLRightInline{The WHO Rapid Evidence Appraisal for COVID-19 Therapies
 (REACT) Working Group. Association Between Administration of IL-6
 Antagonists and Mortality Among Patients Hospitalized for COVID-19: A
@@ -865,7 +922,7 @@ Meta-analysis. JAMA {[}Internet{]}. 2021 Aug 10 {[}cited 2021 Sep
 \url{https://doi.org/10.1001/jama.2021.11330}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-trone2020}{}}%
-\CSLLeftMargin{15. }
+\CSLLeftMargin{16. }
 \CSLRightInline{Trone JC, Ollier E, Chapelle C, Mismetti P, Cucherat M,
 Magné N, et al. Assessment of non-inferiority with meta-analysis:
 example of hypofractionated radiation therapy in breast and prostate
@@ -874,7 +931,7 @@ cancer. Sci Rep {[}Internet{]}. 2020 Sep 22 {[}cited 2022 Mar
 \url{https://www.nature.com/articles/s41598-020-72088-2}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-fda}{}}%
-\CSLLeftMargin{16. }
+\CSLLeftMargin{17. }
 \CSLRightInline{U.S. Department of Health and Human Services Food and
 Drug Administration. Non-Inferiority Clinical Trials to Establish
 Effectiveness Guidance for Industry {[}Internet{]}. 2016. Available
@@ -887,7 +944,7 @@ from: \url{https://www.fda.gov/media/78504/download}}
 \hypertarget{appendix-results}{%
 \section{Appendix Results}\label{appendix-results}}
 
-\newgeometry{left=0.5in,right=0.5in,top=0.1in,bottom=0.1in, noheadfoot}
+\newgeometry{left=0.5in,right=0.1in,top=0.1in,bottom=0.1in, noheadfoot}
 
 \begin{landscape}
 
@@ -935,6 +992,7 @@ REMAP-CAP & Peer-reviewed & 113 & 28 & 400 mg \\
 SARCOVID & Non-peer-reviewed & 1 & 28 & 400 mg \\ 
 SARICOR & Peer-reviewed & NA & 28 & 200 or 400 mg \\ 
 SARTRE & Peer-reviewed & 8 & 28 & Based on weight, < 75 kg: 200 mg; >= 400 mg \\ 
+Lescure et al. & Peer-reviewed & 45 & 28 & 200 or 400 mg \\ 
  \bottomrule
 \end{longtable}
 \vspace{-5mm}
@@ -988,6 +1046,7 @@ REMAP-CAP & Single dose & Usual care \\
 SARCOVID & Single dose of 200 mg twice & Usual care \\ 
 SARICOR & Single dose & Usual care \\ 
 SARTRE & Single dose & Usual care \\ 
+Lescure et al. & Single dose with possible second dose based on the investigator's benfit-risk assessment & Placebo + Usual Care \\ 
  \bottomrule
 \end{longtable}
 
@@ -1001,7 +1060,7 @@ SARTRE & Single dose & Usual care \\
 \subsection{Appendix Figure 1: Risk of Bias
 Assessment}\label{appendix-figure-1-risk-of-bias-assessment}}
 
-\begin{center}\includegraphics{supplementary_material_files/figure-latex/unnamed-chunk-6-1} \end{center}
+\begin{center}\includegraphics{supplementary_material_files/figure-latex/unnamed-chunk-7-1} \end{center}
 
 Risk of bias for domain-level as well as overall judgement for each
 individual study.
@@ -1012,7 +1071,7 @@ data; D4: bias in measurement of the outcome; D5: bias in selection of
 the reported result.
 
 ``+'' depicts ``Low'' risk, while ``!'' and ``-'' indicate ``Some
-concerns'' and ``High,'' respectively.
+concerns'' and ``High'', respectively.
 
 Studies with * indicate that the risk of bias assessment was performed
 by our research group. In contrast, ** indicates that the assessment was
@@ -1023,16 +1082,16 @@ section.
 \subsection{Appendix Figure 2: Risk of Bias
 Proportion}\label{appendix-figure-2-risk-of-bias-proportion}}
 
-\begin{center}\includegraphics{supplementary_material_files/figure-latex/unnamed-chunk-7-1} \end{center}
+\begin{center}\includegraphics{supplementary_material_files/figure-latex/unnamed-chunk-8-1} \end{center}
 
 Distributions of proportions of risk of bias within each domain. Panel
 A: Tocilizumab studies; Panel B: Baricitinib; Panel C: Sarilumab.
 
 \newpage
 
-\hypertarget{appendix-figure-3-posterior-probabilities-odds-ratio}{%
-\subsection{Appendix Figure 3: Posterior Probabilities (Odds
-Ratio)}\label{appendix-figure-3-posterior-probabilities-odds-ratio}}
+\hypertarget{appendix-figure-3-meta-analyses-posterior-probabilities}{%
+\subsection{Appendix Figure 3: Meta-Analyses: Posterior
+Probabilities}\label{appendix-figure-3-meta-analyses-posterior-probabilities}}
 
 \begin{center}\includegraphics{supplementary_material_files/figure-latex/posterior probabilities heatmap-1} \end{center}
 
@@ -1057,7 +1116,7 @@ effect (\(\mu\)).
 \subsection{Appendix Figure 4: Baricitinib Sensitivity
 Meta-Analysis}\label{appendix-figure-4-baricitinib-sensitivity-meta-analysis}}
 
-\begin{center}\includegraphics[width=29.17in]{/Users/arthur/Coding/projects/active/toci_sari_bari/output/figures/supplementary/forest_sari_sens} \end{center}
+\begin{center}\includegraphics[width=29.17in]{/Users/arthur/Coding/projects/done/toci_sari_bari/output/figures/supplementary/forest_sari_sens} \end{center}
 
 Sensitivity analysis including all patients treated with
 corticosteroids, regardless of tocilizumab use, in RECOVERY Bari.
@@ -1122,8 +1181,8 @@ Weakly Informative & 11.2 & 73.6 & 14.5 \\
 \midrule
 \multicolumn{1}{l}{Sarilumab} \\ 
 \midrule
-Informative & 34.2 & 65.0 & 0.8 \\ 
-Weakly Informative & 23.7 & 62.3 & 13.5 \\ 
+Informative & 35.8 & 63.4 & 0.8 \\ 
+Weakly Informative & 27.7 & 62.4 & 9.5 \\ 
  \bottomrule
 \end{longtable}
 \begin{minipage}{\linewidth}
@@ -1133,7 +1192,7 @@ Low heterogeneity range: between 0 and 0.1 log odds ratio; Reasonable range: bet
 \newpage
 
 \hypertarget{appendix-table-3-meta-analyses-summary-results}{%
-\subsection{Appendix Table 3: Meta-Analyses Summary
+\subsection{Appendix Table 3: Meta-Analyses: Summary
 Results}\label{appendix-table-3-meta-analyses-summary-results}}
 
 \captionsetup[table]{labelformat=empty,skip=1pt}
@@ -1155,8 +1214,8 @@ Weakly Informative & 0.75 [0.46, 1.07] & 0.27 [0, 0.69] & 0.76 [0.31, 1.79] \\
 \midrule
 \multicolumn{1}{l}{Sarilumab} \\ 
 \midrule
-Informative & 0.9 [0.59, 1.41] & 0.13 [0.02, 0.35] & 0.9 [0.51, 1.56] \\ 
-Weakly Informative & 0.89 [0.51, 1.41] & 0.22 [0, 0.68] & 0.89 [0.36, 1.99] \\ 
+Informative & 0.91 [0.6, 1.4] & 0.13 [0.02, 0.34] & 0.91 [0.53, 1.55] \\ 
+Weakly Informative & 0.9 [0.57, 1.47] & 0.19 [0, 0.61] & 0.9 [0.39, 1.92] \\ 
  \bottomrule
 \end{longtable}
 \vspace{-5mm}
@@ -1174,7 +1233,7 @@ Informative Between-study SD Prior: LN(-1.975, 0.67); Weakly Informative Prior: 
 \subsection{Appendix Figure 6: Funnel
 Plots}\label{appendix-figure-6-funnel-plots}}
 
-\begin{center}\includegraphics[width=15.39in,height=1.2\linewidth]{/Users/arthur/Coding/projects/active/toci_sari_bari/output/figures/supplementary/funnels} \end{center}
+\begin{center}\includegraphics[width=15.39in,height=1.2\linewidth]{/Users/arthur/Coding/projects/done/toci_sari_bari/output/figures/supplementary/funnels} \end{center}
 
 Contour-enhanced funnel plots for small study effect assessment.
 
@@ -1209,77 +1268,142 @@ Baricitinib & We did not downgrade as most studies were of reasonably low risk o
 
 \newpage
 
-\hypertarget{appendix-figure-7-sarilumab-vs.-tocilizumab-sensitivity-analysis}{%
-\subsection{Appendix Figure 7: Sarilumab vs.~Tocilizumab Sensitivity
-Analysis}\label{appendix-figure-7-sarilumab-vs.-tocilizumab-sensitivity-analysis}}
+\hypertarget{appendix-figure-7-baricitinib-vs.-tocilizumab-meta-regression-sensitivity-analysis}{%
+\subsection{Appendix Figure 7: Baricitinib vs.~Tocilizumab
+Meta-Regression Sensitivity
+Analysis}\label{appendix-figure-7-baricitinib-vs.-tocilizumab-meta-regression-sensitivity-analysis}}
 
-\begin{center}\includegraphics{supplementary_material_files/figure-latex/meta regressions sensitivity plot display-1} \end{center}
+\begin{center}\includegraphics{supplementary_material_files/figure-latex/meta regressions sensitivity plot bari display-1} \end{center}
 
-Post-hoc sensitivity analysis on sarilumab vs.~tocilizumab
-meta-regression model (ratio of odds ratios). Color filled curves
-represent marginal posterior distributions. Color filled areas represent
-the posterior probability of noninferiority (Pr \textless{} 1.14), as
-the percentages on top of each panel. Interval bars depict the posterior
-median and 95\% credible intervals. Solid gray lines represent
-underlying prior distributions. Each belief is labeled on top of each
-figure.
+Post-hoc sensitivity analysis on baricitinib vs.~tocilizumab
+meta-regression model (ratio of odds ratios) with the originally
+prespecificied (less informative) priors.
 
-Underlying prior distributions: ``Optimistic for Sarilumab,''
-\(\operatorname{Normal}(-0.049, 0.193^2)\); ``Optimistic for
-Tocilizumab,'' \(\operatorname{Normal}(0.049, 0.193^2)\)
+Color filled curves represent marginal posterior distributions. Color
+filled areas represent the posterior probability of noninferiority (Pr
+\textless{} 1.14), as the percentages on top of each panel. Interval
+bars depict the posterior median and 95\% credible intervals. Solid gray
+lines represent underlying prior distributions. Each belief is labeled
+on top of each figure.
+
+Underlying prior distributions: ``Optimistic for Baricitinib'',
+\(\operatorname{Normal}(-0.105, 0.416^2)\); ``Optimistic for
+Tocilizumab'', \(\operatorname{Normal}(0.105, 0.416^2)\)
 
 \newpage
 
-\hypertarget{appendix-table-5-sarilumab-vs.-tocilizumab-sensitivity-analysis}{%
-\subsection{Appendix Table 5: Sarilumab vs.~Tocilizumab Sensitivity
-Analysis}\label{appendix-table-5-sarilumab-vs.-tocilizumab-sensitivity-analysis}}
+\hypertarget{appendix-table-5-baricitinib-vs.-tocilizumab-meta-regression-sensitivity-analysis}{%
+\subsection{Appendix Table 5: Baricitinib vs.~Tocilizumab
+Meta-Regression Sensitivity
+Analysis}\label{appendix-table-5-baricitinib-vs.-tocilizumab-meta-regression-sensitivity-analysis}}
 
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedleft}X>{\raggedleft}X}
 \toprule
 Belief & ROR (95\% CrI) & Probability of Noninferiority, \% (1) & Probability of Superiority, \% (2)\\
 \midrule
-Optimistic for Sarilumab & 1.03 (0.76, 1.34) & 75 & 41\\
- 
-Optimistic for Tocilizumab & 1.09 (0.81, 1.45) & 60 & 28\\
+Optimistic for Baricitinib & 1 (0.71, 1.31) & 82 & 50\\
+\addlinespace
+Optimistic for Tocilizumab & 1.03 (0.72, 1.32) & 78 & 43\\
 \bottomrule
 \multicolumn{4}{l}{\rule{0pt}{1em}\textit{Note: }}\\
 \multicolumn{4}{l}{\rule{0pt}{1em}Abbreviations: ROR, ratio of odds ratios; CrI, credible interval}\\
-\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{1} Probability of Noninferiority, \%}\\
-\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{2} Probability of Superiority, \%}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{1} Posterior probability below the noninferiority margin (1.14 ROR)}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{2} Posterior probability below 1.0 ROR}\\
 \end{tabu}
 
-Underlying prior distributions: ``Optimistic for Sarilumab,''
-\(\operatorname{Normal}(-0.049, 0.193^2)\); ``Optimistic for
-Tocilizumab,'' \(\operatorname{Normal}(0.049, 0.193^2)\)
+Post-hoc sensitivity analysis on baricitinib vs.~tocilizumab
+meta-regression model (ratio of odds ratios) with the originally
+prespecificied (less informative) priors.
+
+Underlying prior distributions: ``Optimistic for Baricitinib'',
+\(\operatorname{Normal}(-0.105, 0.416^2)\); ``Optimistic for
+Tocilizumab'', \(\operatorname{Normal}(0.105, 0.416^2)\)
 
 \newpage
 
-\hypertarget{appendix-table-6-baricitinib-vs.-tocilizumab-sensitivity-analysis}{%
-\subsection{Appendix Table 6: Baricitinib vs.~Tocilizumab Sensitivity
-Analysis}\label{appendix-table-6-baricitinib-vs.-tocilizumab-sensitivity-analysis}}
+\hypertarget{appendix-figure-8-sarilumab-vs.-tocilizumab-meta-regression-sensitivity-analysis}{%
+\subsection{Appendix Figure 8: Sarilumab vs.~Tocilizumab Meta-Regression
+Sensitivity
+Analysis}\label{appendix-figure-8-sarilumab-vs.-tocilizumab-meta-regression-sensitivity-analysis}}
+
+\begin{center}\includegraphics{supplementary_material_files/figure-latex/meta regressions sensitivity plot sari display-1} \end{center}
+
+Post-hoc sensitivity analysis on sarilumab vs.~tocilizumab
+meta-regression model (ratio of odds ratios) with the originally
+prespecificied (less informative) priors.
+
+Color filled curves represent marginal posterior distributions. Color
+filled areas represent the posterior probability of noninferiority (Pr
+\textless{} 1.14), as the percentages on top of each panel. Interval
+bars depict the posterior median and 95\% credible intervals. Solid gray
+lines represent underlying prior distributions. Each belief is labeled
+on top of each figure.
+
+Underlying prior distributions: ``Optimistic for Sarilumab'',
+\(\operatorname{Normal}(-0.049, 0.193^2)\); ``Optimistic for
+Tocilizumab'', \(\operatorname{Normal}(0.049, 0.193^2)\)
+
+\newpage
+
+\hypertarget{appendix-table-6-sarilumab-vs.-tocilizumab-meta-regression-sensitivity-analysis}{%
+\subsection{Appendix Table 6: Sarilumab vs.~Tocilizumab Meta-Regression
+Sensitivity
+Analysis}\label{appendix-table-6-sarilumab-vs.-tocilizumab-meta-regression-sensitivity-analysis}}
+
+\begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedleft}X>{\raggedleft}X}
+\toprule
+Belief & ROR (95\% CrI) & Probability of Noninferiority, \% (1) & Probability of Superiority, \% (2)\\
+\midrule
+Optimistic for Sarilumab & 1.04 (0.76, 1.37) & 72 & 39\\
+\addlinespace
+Optimistic for Tocilizumab & 1.1 (0.8, 1.43) & 60 & 25\\
+\bottomrule
+\multicolumn{4}{l}{\rule{0pt}{1em}\textit{Note: }}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}Abbreviations: ROR, ratio of odds ratios; CrI, credible interval}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{1} Posterior probability below the noninferiority margin (1.14 ROR)}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{2} Posterior probability below 1.0 ROR}\\
+\end{tabu}
+
+Meta-regression sensitivity analyses with the originally prespecificied
+(less informative) priors
+
+Underlying prior distributions: ``Optimistic for Sarilumab'',
+\(\operatorname{Normal}(-0.049, 0.193^2)\); ``Optimistic for
+Tocilizumab'', \(\operatorname{Normal}(0.049, 0.193^2)\)
+
+\newpage
+
+\hypertarget{appendix-table-7-baricitinib-vs.-tocilizumab-sensitivity-analysis-recovery-bari}{%
+\subsection{Appendix Table 7: Baricitinib vs.~Tocilizumab Sensitivity
+Analysis (RECOVERY
+Bari)}\label{appendix-table-7-baricitinib-vs.-tocilizumab-sensitivity-analysis-recovery-bari}}
 
 \begin{tabu} to \linewidth {>{\raggedright}X>{\raggedright}X>{\raggedleft}X>{\raggedleft}X}
 \toprule
 Belief & ROR (95\% CrI) & Probability of Noninferiority, \% (1) & Probability of Superiority, \% (2)\\
 \midrule
 Vague & 0.99 (0.7, 1.29) & 85 & 53\\
- 
+\addlinespace
 Skeptical & 1 (0.73, 1.27) & 85 & 51\\
- 
-Optimistic for Baricitinib & 0.98 (0.69, 1.25) & 87 & 56\\
- 
-Optimistic for Tocilizumab & 1.01 (0.72, 1.27) & 83 & 48\\
+\addlinespace
+Optimistic for Baricitinib (Karampitsakos et al.) & 0.91 (0.66, 1.17) & 96 & 75\\
+\addlinespace
+Optimistic for Tocilizumab (inverse Karampitsakos et al.) & 1.07 (0.82, 1.34) & 68 & 27\\
 \bottomrule
 \multicolumn{4}{l}{\rule{0pt}{1em}\textit{Note: }}\\
 \multicolumn{4}{l}{\rule{0pt}{1em}Abbreviations: ROR, ratio of odds ratios; CrI, credible interval}\\
-\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{1} Probability of Noninferiority, \%}\\
-\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{2} Probability of Superiority, \%}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{1} Posterior probability below the noninferiority margin (1.14 ROR)}\\
+\multicolumn{4}{l}{\rule{0pt}{1em}\textsuperscript{2} Posterior probability below 1.0 ROR}\\
 \end{tabu}
 
-Underlying prior distributions: ``Skeptical,''
-\(\operatorname{Normal}(0, 0.354^2)\); ``Optimistic for Baricitinib,''
-\(\operatorname{Normal}(-0.105, 0.416^2)\); ``Optimistic for
-Tocilizumab,'' \(\operatorname{Normal}(0.105, 0.416^2)\); ``Vague,''
+Sensitivity analysis including all patients treated with
+corticosteroids, regardless of tocilizumab use, in RECOVERY Bari.
+
+Underlying prior distributions: ``Skeptical'',
+\(\operatorname{Normal}(0, 0.354^2)\); ``Optimistic for Baricitinib
+(Karampitsakos et al.)'', \(\operatorname{Normal}(-0.335, 0.264^2)\);
+``Optimistic for Tocilizumab (inverse Karampitsakos et al.)'',
+\(\operatorname{Normal}(0.335, 0.264^2)\); ``Vague'',
 \(\operatorname{Normal}(0, 4^2)\);
 
 \end{document}
