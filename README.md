@@ -1,4 +1,4 @@
-This repository contains code and data to reproduce analysis in the research article (now accepted in the Clinical Microbiology and Infection journal):
+This repository contains code and data to reproduce analysis in the research article (now (online in CMI) [https://www.clinicalmicrobiologyandinfection.com/article/S1198-743X(22)00372-X/fulltext]):
 
 ## **Effect of Tocilizumab, Sarilumab, and Baricitinib on Mortality Among Patients Hospitalized for COVID-19 Treated with Corticosteroids: A Systematic Review and Meta-Analysis**
 
